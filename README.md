@@ -37,8 +37,12 @@ python -m SeriesIntroRecogniser.src --video1_path=../assets/s1e1.mp4 \
 Result:
 
 ```text
-(Scene(start=00:00:42.042 [frame=1008, fps=23.976], end=00:02:12.007 [frame=3165, fps=23.976]), Scene(start=00:01:09.027 [frame=1655, fps=23.976], end=00:02:38.992 [frame=3812, fps=23.976]))
-(Scene(start=00:22:03.989 [frame=31744, fps=23.976], end=00:23:33.996 [frame=33902, fps=23.976]), Scene(start=00:22:18.963 [frame=32103, fps=23.976], end=00:23:48.969 [frame=34261, fps=23.976]))
+Found 2 common scenes
+Video 1:  Scene(start=00:00:42.042 [frame=1008, fps=23.976], end=00:02:12.007 [frame=3165, fps=23.976])
+Video 2:  Scene(start=00:01:09.027 [frame=1655, fps=23.976], end=00:02:38.992 [frame=3812, fps=23.976])
+
+Video 1:  Scene(start=00:22:03.989 [frame=31744, fps=23.976], end=00:23:33.996 [frame=33902, fps=23.976])
+Video 2:  Scene(start=00:22:18.963 [frame=32103, fps=23.976], end=00:23:48.969 [frame=34261, fps=23.976])
 ```
 
 ### Parameters
