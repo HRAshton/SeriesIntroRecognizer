@@ -92,6 +92,6 @@ def _get_hashes(video: VideoStream, scenes: Iterable[Scene]) -> Iterable[HashedS
         video.seek(segment[0])
         frame = video.read()
         image_arr = Image.fromarray(frame)
-        average_hash = imagehash.average_hash(image_arr)
+        average_hash = imagehash.phash(image_arr)
 
         yield HashedScene(segment, average_hash)

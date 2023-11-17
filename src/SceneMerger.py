@@ -1,5 +1,4 @@
 import logging
-from typing import Set
 
 from Types import Scene
 
@@ -12,6 +11,7 @@ def find_concurrent_scenes_merge(similar_scenes: list[tuple[Scene, Scene]],
     It is assumed that the scenes are sorted by time.
     :param similar_scenes: List of similar scenes.
                            Can contain false positives results or scenes that are not concurrent.
+    :param available_time_diff_between_frames_in_secs: Maximum time difference between frames in seconds.
     :return: List of merged scenes for each video.
     """
 
@@ -23,7 +23,12 @@ def find_concurrent_scenes_merge(similar_scenes: list[tuple[Scene, Scene]],
     merged_groups = []
     for group in scenes_groups:
         merge_result = _merge_segments(group)
-        merged_groups.append(merge_result)
+        if (merged_groups
+                and merge_result[0].start.get_seconds() - merged_groups[-1][0].end.get_seconds()
+                < available_time_diff_between_frames_in_secs):
+            merged_groups[-1] = _merge_segments([merged_groups[-1], merge_result])
+        else:
+            merged_groups.append(merge_result)
     logging.debug("Got %d merged groups of concurrent scenes", len(merged_groups))
 
     return merged_groups
@@ -31,43 +36,48 @@ def find_concurrent_scenes_merge(similar_scenes: list[tuple[Scene, Scene]],
 
 def _get_scenes_groups(similar_scenes: list[tuple[Scene, Scene]],
                        available_time_diff_between_frames_in_secs: float) -> list[list[tuple[Scene, Scene]]]:
-    scenes_groups = []
-    current_group: Set[tuple[Scene, Scene]] = set()
+    scenes_with_same_lengths = list(filter(lambda scenes: abs(
+        scenes[0].duration_secs() - scenes[1].duration_secs()) < 1,
+                                           similar_scenes))
 
-    for i in range(len(similar_scenes) - 1):
-        is_concurrent = _is_concurrent_scenes(i, similar_scenes, available_time_diff_between_frames_in_secs)
-        if is_concurrent:
-            current_group.add(similar_scenes[i])
-            current_group.add(similar_scenes[i + 1])
-        elif len(current_group) > 0:
-            current_group.add(similar_scenes[i])  # The current scene is the last scene in the group
-            scenes_groups.append(current_group)
-            current_group = set()
+    video1_groups = _get_single_video_scenes_groups(scenes_with_same_lengths, 0,
+                                                    available_time_diff_between_frames_in_secs)
+    video2_groups = _get_single_video_scenes_groups(scenes_with_same_lengths, 1,
+                                                    available_time_diff_between_frames_in_secs)
 
-    if len(current_group) > 0:
-        scenes_groups.append(current_group)
+    groups = []
+    for video1_group in video1_groups:
+        for video2_group in video2_groups:
+            intersection = video1_group.intersection(video2_group)
+            if len(intersection) > 0:
+                groups.append(intersection)
 
     ordered_groups = list(map(lambda group: sorted(group, key=lambda scene: scene[0].start.frame_num),
-                              scenes_groups))
+                              groups))
 
     return ordered_groups
+
+
+def _get_single_video_scenes_groups(similar_scenes: list[tuple[Scene, Scene]],
+                                    video_index: int,
+                                    available_time_diff_between_frames_in_secs: float) \
+        -> list[set[tuple[Scene, Scene]]]:
+    groups: list[set[tuple[Scene, Scene]]] = [set()]
+    for i in range(len(similar_scenes) - 1):
+        curr_scene_end = similar_scenes[i][video_index].end.get_seconds()
+        next_scene_start = similar_scenes[i + 1][video_index].start.get_seconds()
+
+        is_concurrent = abs(next_scene_start - curr_scene_end) < available_time_diff_between_frames_in_secs
+        if is_concurrent:
+            groups[-1].add(similar_scenes[i])
+            groups[-1].add(similar_scenes[i + 1])
+        else:
+            groups.append(set())
+
+    return groups
 
 
 def _merge_segments(segments: list[tuple[Scene, Scene]]) -> tuple[Scene, Scene]:
     v1_segment = Scene(segments[0][0].start, segments[-1][0].end)
     v2_segment = Scene(segments[0][1].start, segments[-1][1].end)
     return v1_segment, v2_segment
-
-
-def _is_concurrent_scenes(i: int,
-                          similar_scenes: list[tuple[Scene, Scene]],
-                          available_time_diff_between_frames_in_secs: float) -> bool:
-    timecode1_curr_secs = similar_scenes[i][0].start.get_seconds()
-    timecode1_next_secs = similar_scenes[i + 1][0].start.get_seconds()
-    timecode2_curr_secs = similar_scenes[i][1].start.get_seconds()
-    timecode2_next_secs = similar_scenes[i + 1][1].start.get_seconds()
-
-    diff1 = timecode1_next_secs - timecode1_curr_secs
-    diff2 = timecode2_next_secs - timecode2_curr_secs
-
-    return abs(diff1 - diff2) < available_time_diff_between_frames_in_secs
