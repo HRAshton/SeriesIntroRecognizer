@@ -1,6 +1,6 @@
 from Types import Scene, HashedScene
 
-hashes_threshold = 5
+hashes_threshold = 15
 
 
 def find_similar_scenes(video1_scenes: list[HashedScene],
