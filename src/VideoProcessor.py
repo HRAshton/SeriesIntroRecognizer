@@ -12,12 +12,14 @@ from Types import Scene, HashedScene
 def extract_scenes_with_hashes(video_path: str,
                                scenedetect_threshold: float = 27,
                                scenedetect_show_progress: bool = True,
+                               first_seconds_to_analyze: int | None = None,
                                cache: Cache = None) -> list[HashedScene]:
     """
     Extract scenes from a video and compute hashes for the first frame of each scene.
     :param video_path: Path to the video.
     :param scenedetect_threshold: Threshold for ContentDetector.
     :param scenedetect_show_progress: Whether to show progress bar.
+    :param first_seconds_to_analyze: How many seconds to analyze from the beginning of the video.
     :param cache: Cache to use for storing hashes. If None, no cache is used.
     :return: List of scenes with hashes.
     """
@@ -29,7 +31,10 @@ def extract_scenes_with_hashes(video_path: str,
             logging.debug("Found %d scenes for video %s in cache", len(cached_hashes), video_path)
             return cached_hashes
 
-    hashed_scenes_list = _extract_scenes_with_hashes(video_path, scenedetect_threshold, scenedetect_show_progress)
+    hashed_scenes_list = _extract_scenes_with_hashes(video_path,
+                                                     scenedetect_threshold,
+                                                     scenedetect_show_progress,
+                                                     first_seconds_to_analyze)
 
     if cache is not None:
         logging.debug("Saving hashes to cache...")
@@ -42,23 +47,27 @@ def extract_scenes_with_hashes(video_path: str,
 
 def _extract_scenes_with_hashes(video_path: str,
                                 scenedetect_threshold: float = 27,
-                                scenedetect_show_progress: bool = True) -> list[HashedScene]:
-    logging.debug(f"Opening video {video_path}...")
+                                scenedetect_show_progress: bool = True,
+                                first_seconds_to_analyze: int | None = None) -> list[HashedScene]:
+    logging.info(f"Opening video {video_path}...")
     video = open_video(video_path)
 
-    logging.debug("Finding scenes...")
-    scenes = _find_scenes(video, scenedetect_show_progress, scenedetect_threshold)
+    logging.info("Finding scenes...")
+    scenes = _find_scenes(video, scenedetect_show_progress, scenedetect_threshold, first_seconds_to_analyze)
 
-    logging.debug("Getting hashes...")
+    logging.info("Getting hashes...")
     hashed_scenes_iter = _get_hashes(video, scenes)
 
-    logging.debug("Make list of hashes...")
+    logging.info("Make list of hashes...")
     hashed_scenes_list = list(hashed_scenes_iter)
 
     return hashed_scenes_list
 
 
-def _find_scenes(video: VideoStream, show_progress: bool, scenedetect_threshold: float) -> Iterable[Scene]:
+def _find_scenes(video: VideoStream,
+                 show_progress: bool,
+                 scenedetect_threshold: float,
+                 first_seconds_to_analyze: int | None) -> Iterable[Scene]:
     """
     Find scenes in a video.
     Uses scenedetect library with ContentDetector to find scenes in a video.
@@ -71,7 +80,11 @@ def _find_scenes(video: VideoStream, show_progress: bool, scenedetect_threshold:
     scene_manager = SceneManager()
     scene_manager.add_detector(ContentDetector(threshold=scenedetect_threshold))
 
-    scene_manager.detect_scenes(video, show_progress=show_progress)
+    scene_manager.detect_scenes(video,
+                                show_progress=show_progress,
+                                callback=None
+                                if first_seconds_to_analyze is None
+                                else lambda _, __: _stopper(video, scene_manager.stop, first_seconds_to_analyze))
 
     scenes_tuples = scene_manager.get_scene_list()
     scenes = map(lambda tpl: Scene(tpl[0], tpl[1]), scenes_tuples)
@@ -95,3 +108,8 @@ def _get_hashes(video: VideoStream, scenes: Iterable[Scene]) -> Iterable[HashedS
         average_hash = imagehash.phash(image_arr)
 
         yield HashedScene(segment, average_hash)
+
+
+def _stopper(video: VideoStream, stop: callable, first_seconds_to_analyze: int | None):
+    if video.position.get_seconds() > first_seconds_to_analyze:
+        stop()
