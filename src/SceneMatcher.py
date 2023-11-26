@@ -1,15 +1,15 @@
 from Types import Scene, HashedScene
 
-hashes_threshold = 15
-
 
 def find_similar_scenes(video1_scenes: list[HashedScene],
-                        video2_scenes: list[HashedScene]) -> list[tuple[Scene, Scene]]:
+                        video2_scenes: list[HashedScene],
+                        hashes_threshold: int = 20) -> list[tuple[Scene, Scene]]:
     """
     Find similar scenes between two videos.
     Usually returns a lot of false positives.
     :param video1_scenes: Scenes with hashes for video 1
     :param video2_scenes: Scenes with hashes for video 2
+    :param hashes_threshold: Threshold for hashes difference
     :return: List of beginning and ending scenes for each video
     """
     similar_scenes = []
