@@ -4,7 +4,7 @@ from typing import Iterable
 import imagehash
 from PIL import Image
 from diskcache import Cache
-from scenedetect import VideoStream, SceneManager, ContentDetector, open_video
+from scenedetect import VideoStream, SceneManager, ContentDetector, open_video, FrameTimecode
 
 from Types import Scene, HashedScene
 
@@ -13,6 +13,7 @@ def extract_scenes_with_hashes(video_path: str,
                                scenedetect_threshold: float = 27,
                                scenedetect_show_progress: bool = True,
                                first_seconds_to_analyze: int | None = None,
+                               additional_marks_secs: float = 0,
                                cache: Cache = None) -> list[HashedScene]:
     """
     Extract scenes from a video and compute hashes for the first frame of each scene.
@@ -20,6 +21,7 @@ def extract_scenes_with_hashes(video_path: str,
     :param scenedetect_threshold: Threshold for ContentDetector.
     :param scenedetect_show_progress: Whether to show progress bar.
     :param first_seconds_to_analyze: How many seconds to analyze from the beginning of the video.
+    :param additional_marks_secs: How many seconds to add to the beginning and end of each scene.
     :param cache: Cache to use for storing hashes. If None, no cache is used.
     :return: List of scenes with hashes.
     """
@@ -34,7 +36,8 @@ def extract_scenes_with_hashes(video_path: str,
     hashed_scenes_list = _extract_scenes_with_hashes(video_path,
                                                      scenedetect_threshold,
                                                      scenedetect_show_progress,
-                                                     first_seconds_to_analyze)
+                                                     first_seconds_to_analyze,
+                                                     additional_marks_secs)
 
     if cache is not None:
         logging.debug("Saving hashes to cache...")
@@ -46,14 +49,19 @@ def extract_scenes_with_hashes(video_path: str,
 
 
 def _extract_scenes_with_hashes(video_path: str,
-                                scenedetect_threshold: float = 27,
-                                scenedetect_show_progress: bool = True,
-                                first_seconds_to_analyze: int | None = None) -> list[HashedScene]:
+                                scenedetect_threshold: float,
+                                scenedetect_show_progress: bool,
+                                first_seconds_to_analyze: int | None,
+                                additional_marks_secs: float) -> list[HashedScene]:
     logging.info(f"Opening video {video_path}...")
     video = open_video(video_path)
 
     logging.info("Finding scenes...")
-    scenes = _find_scenes(video, scenedetect_show_progress, scenedetect_threshold, first_seconds_to_analyze)
+    scenes = _find_scenes(video,
+                          scenedetect_show_progress,
+                          scenedetect_threshold,
+                          first_seconds_to_analyze,
+                          additional_marks_secs)
 
     logging.info("Getting hashes...")
     hashed_scenes_iter = _get_hashes(video, scenes)
@@ -67,13 +75,16 @@ def _extract_scenes_with_hashes(video_path: str,
 def _find_scenes(video: VideoStream,
                  show_progress: bool,
                  scenedetect_threshold: float,
-                 first_seconds_to_analyze: int | None) -> Iterable[Scene]:
+                 first_seconds_to_analyze: int | None,
+                 additional_marks_secs: float) -> Iterable[Scene]:
     """
     Find scenes in a video.
     Uses scenedetect library with ContentDetector to find scenes in a video.
     :param video: Video to find scenes in.
     :param show_progress: Whether to show progress bar.
     :param scenedetect_threshold: Threshold for ContentDetector.
+    :param first_seconds_to_analyze: How many seconds to analyze from the beginning of the video.
+    :param additional_marks_secs: How many seconds to add to the beginning and end of each scene.
     :return: List of scenes. Each scene is a tuple of start and end timecodes.
     """
 
@@ -87,7 +98,32 @@ def _find_scenes(video: VideoStream,
                                 else lambda _, __: _stopper(video, scene_manager.stop, first_seconds_to_analyze))
 
     scenes_tuples = scene_manager.get_scene_list()
-    scenes = map(lambda tpl: Scene(tpl[0], tpl[1]), scenes_tuples)
+
+    all_scenes_have_same_fps = all(map(lambda scn: scn[1].framerate == scenes_tuples[0][1].framerate, scenes_tuples))
+    if not all_scenes_have_same_fps:
+        raise ValueError("All scenes must have the same fps")
+
+    all_scenes_end_matches_next_scene_start = all(map(
+        lambda scn: scn[1] == scenes_tuples[scenes_tuples.index(scn) + 1][0],
+        scenes_tuples[:-1]))
+    if not all_scenes_end_matches_next_scene_start:
+        raise ValueError("All scenes must end with the same frame that next scene starts with")
+
+    fps = scenes_tuples[0][0].framerate
+    extended_timecodes = []
+    for scene in scenes_tuples:
+        extended_timecodes.append(scene[0].frame_num)
+        extended_timecodes.append(scene[1].frame_num)
+        extended_timecodes.append(scene[0].frame_num - int(fps * additional_marks_secs))
+        extended_timecodes.append(scene[1].frame_num + int(fps * additional_marks_secs))
+
+    extended_timecodes.sort()
+    extended_timecodes = list(dict.fromkeys(extended_timecodes))
+
+    scenes = []
+    for i in range(1, len(extended_timecodes) - 2, 1):
+        scenes.append(Scene(FrameTimecode(extended_timecodes[i], fps=fps),
+                            FrameTimecode(extended_timecodes[i + 1], fps=fps)))
 
     return scenes
 
