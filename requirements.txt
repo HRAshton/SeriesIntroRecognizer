@@ -1,0 +1,5 @@
+setuptools~=69.2.0
+librosa~=0.10.1
+numpy~=1.26.4
+scipy~=1.13.0
+cupy-cuda12x~=13.0.0
