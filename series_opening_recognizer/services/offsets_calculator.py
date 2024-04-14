@@ -14,11 +14,11 @@ def _find_limited_max_and_validate(corr_values: GpuFloatArray) -> GpuFloat or No
     filtered = corr_values[corr_values < max_limit]
 
     if filtered.shape[0] == 0:
-        logger.debug('Fragments are the same. Skipping.')
+        logger.warning('Fragments are the same. Skipping. Try to increase the samples length.')
         return None
 
     if cp.mean(filtered) < cp.median(filtered) * 2:
-        logger.debug('Not enough correlation. Skipping.')
+        logger.warning('Not enough correlation. Skipping. Try to increase the samples length.')
         return None
 
     return cp.max(filtered)
@@ -41,5 +41,7 @@ def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> Tuple[int, int] or 
         window_shape=(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,))
     all_false_windows = cp.all(~shifted_data, axis=1)
     end_idx = cp.argmax(all_false_windows[begin_idx:]) + begin_idx
+    if end_idx == begin_idx:
+        end_idx = bools.shape[0]
 
     return begin_idx, end_idx
