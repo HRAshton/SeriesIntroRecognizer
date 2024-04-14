@@ -21,4 +21,38 @@ OFFSET_SEARCHER__SEQUENTIAL_BEATS = 30
 
 # Save the correlation results to 'correlations' folder.
 # Make sure to create the folder before running the app.
-DEBUG_SAVE_CORRELATIONS = False
+DEBUG_SAVE_INTERMEDIATE_RESULTS = False
+
+
+def set_rate(rate: int) -> None:
+    global RATE
+    RATE = rate
+
+
+def set_min_segment_length_sec(min_segment_length_sec: int) -> None:
+    global MIN_SEGMENT_LENGTH_SEC
+    global MIN_SEGMENT_LENGTH_BEATS
+    MIN_SEGMENT_LENGTH_SEC = min_segment_length_sec
+    MIN_SEGMENT_LENGTH_BEATS = int(MIN_SEGMENT_LENGTH_SEC * RATE)
+
+
+def set_precision_secs(precision_secs: int) -> None:
+    global PRECISION_SECS
+    global PRECISION_BEATS
+    PRECISION_SECS = precision_secs
+    PRECISION_BEATS = int(PRECISION_SECS * RATE)
+
+
+def set_series_window(series_window: int) -> None:
+    global SERIES_WINDOW
+    SERIES_WINDOW = series_window
+
+
+def set_offset_searcher_sequential_beats(offset_searcher_sequential_beats: int) -> None:
+    global OFFSET_SEARCHER__SEQUENTIAL_BEATS
+    OFFSET_SEARCHER__SEQUENTIAL_BEATS = offset_searcher_sequential_beats
+
+
+def set_debug_save_correlations(debug_save_correlations: bool) -> None:
+    global DEBUG_SAVE_INTERMEDIATE_RESULTS
+    DEBUG_SAVE_INTERMEDIATE_RESULTS = debug_save_correlations

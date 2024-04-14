@@ -1,16 +1,15 @@
 import logging
-from typing import Iterable, List, Dict
+from typing import Iterable, List, Dict, Tuple
 
 import cupy as cp
 import numpy as np
 
 from series_opening_recognizer.configuration import (MIN_SEGMENT_LENGTH_BEATS, MIN_SEGMENT_LENGTH_SEC, SERIES_WINDOW,
-                                                     DEBUG_SAVE_CORRELATIONS)
-from series_opening_recognizer.helpers.audio_loader import load_audio
-from series_opening_recognizer.helpers.files_processor import iterate_with_cache
+                                                     DEBUG_SAVE_INTERMEDIATE_RESULTS, PRECISION_SECS)
+from series_opening_recognizer.helpers.cached_iterator import iterate_with_cache
 from series_opening_recognizer.services.correlator.correlator import calculate_correlation, CrossCorrelationResult
-from series_opening_recognizer.services.offsets_searcher.offsets_searcher import find_offsets
-from series_opening_recognizer.services.offsets_searcher.post_processing import find_most_likely_offsets
+from series_opening_recognizer.services.offsets_calculator.offsets_calculator import find_offsets
+from series_opening_recognizer.services.offsets_calculator.post_processing import find_most_likely_offsets
 from series_opening_recognizer.tp.interval import Interval
 from series_opening_recognizer.tp.tp import GpuFloatArray
 
@@ -27,7 +26,7 @@ def _load_to_gpu_and_normalize(audio: np.ndarray) -> GpuFloatArray:
 
 
 def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult) -> None:
-    if not DEBUG_SAVE_CORRELATIONS:
+    if not DEBUG_SAVE_INTERMEDIATE_RESULTS:
         return
 
     logger.info(f'Saving correlations for {file1} and {file2}...')
@@ -36,6 +35,17 @@ def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult) ->
         for corr in result[2]:
             results.append(f'{corr[0]},{corr[1]}')
         f.write('\n'.join(results))
+
+
+def _save_offsets_result(file1: int, file2: int, result: Tuple[int, int]) -> None:
+    if not DEBUG_SAVE_INTERMEDIATE_RESULTS:
+        return
+
+    logger.info(f'Saving offsets for {file1} and {file2}...')
+    with open(f'offsets/{file1}.csv', 'a') as f:
+        f.write(f'{file2},{result[0]},{result[1]}\n')
+    with open(f'offsets/{file2}.csv', 'a') as f:
+        f.write(f'{file1},{result[0]},{result[1]}\n')
 
 
 def _find_offsets_for_episodes(audios: Iterable[np.ndarray]) -> Dict[int, List[Interval]]:
@@ -52,20 +62,21 @@ def _find_offsets_for_episodes(audios: Iterable[np.ndarray]) -> Dict[int, List[I
             continue
 
         corr_result = calculate_correlation(audio1, audio2)
-        _save_corr_result(idx1, idx2, corr_result)
         if corr_result is None:
             continue
+        _save_corr_result(idx1, idx2, corr_result)
 
         corr_by_beats = corr_result[2][:, 1]
         offsets_result = find_offsets(corr_by_beats)
         if offsets_result is None:
             continue
+        _save_offsets_result(idx1, idx2, offsets_result)
 
         offset1_secs, offset2_secs, _ = corr_result
-        begin1_start_secs = float(offset1_secs + offsets_result[0])
-        end1_start_secs = float(offset1_secs + offsets_result[1])
-        begin2_start_secs = float(offset1_secs + offsets_result[0])
-        end2_start_secs = float(offset2_secs + offsets_result[1])
+        begin1_start_secs = float(offset1_secs + offsets_result[0] * PRECISION_SECS)
+        end1_start_secs = float(offset1_secs + offsets_result[1] * PRECISION_SECS)
+        begin2_start_secs = float(offset2_secs + offsets_result[0] * PRECISION_SECS)
+        end2_start_secs = float(offset2_secs + offsets_result[1] * PRECISION_SECS)
 
         logger.debug('Found offsets: %s, %s, %s, %s for %s and %s',
                      begin1_start_secs, end1_start_secs, begin2_start_secs, end2_start_secs, idx1, idx2)
@@ -88,9 +99,3 @@ def recognise_from_audio_samples(audios: Iterable[np.ndarray]) -> Dict[int, Inte
     logger.info('Results: %s', true_offsets)
 
     return true_offsets
-
-
-def recognise_from_audio_files(file_paths: List[str]) -> Dict[str, Interval]:
-    audio_samples_iter = map(lambda path: load_audio(path)[1], file_paths)
-    results = recognise_from_audio_samples(audio_samples_iter)
-    return {file_paths[idx]: interval for idx, interval in results.items()}

@@ -9,7 +9,7 @@ def iterate_with_cache(orig_iter: Iterator[T], n: int) -> Iterator[Tuple[Tuple[i
 
     For example, if N=2, the iterator will yield pairs of elements (0, 1), (0, 2), (1, 2), (1, 3), (2, 3), ...
 
-    1st element will be stored in the cache from 1st to Nth iteration, then it will be unloaded, and the N+1th element
+    1st element will be stored in the cache from 1st to Nth iteration, then it will be unloaded, and the N+1st element
     will be stored in the cache.
     :param orig_iter: Original iterator
     :param n: Number of subsequent elements to cache

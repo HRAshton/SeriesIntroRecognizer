@@ -3,11 +3,12 @@ from typing import Tuple
 import cupy as cp
 
 from series_opening_recognizer.configuration import RATE
-from series_opening_recognizer.tp.tp import GpuFloat, GpuFloatArray
+from series_opening_recognizer.tp.tp import GpuFloat, GpuFloatArray, GpuInt
 
 
 @cp.fuse()
-def _compute_offsets_and_indices(offsets_diff: int, length: int) -> Tuple[float, float, int, int, int, int]:
+def _compute_offsets_and_indices(offsets_diff: int, length: int) \
+        -> Tuple[GpuFloat, GpuFloat, GpuInt, GpuInt, GpuInt, GpuInt]:
     offset1_secs = cp.maximum(0.0, offsets_diff / RATE)
     offset2_secs = cp.maximum(0.0, -offsets_diff / RATE)
 
@@ -22,7 +23,20 @@ def _compute_offsets_and_indices(offsets_diff: int, length: int) -> Tuple[float,
 
 
 def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
-                    audio1: GpuFloatArray, audio2: GpuFloatArray) -> Tuple[GpuFloatArray, GpuFloatArray, float, float]:
+                    audio1: GpuFloatArray, audio2: GpuFloatArray) \
+        -> Tuple[GpuFloatArray, GpuFloatArray, GpuFloat, GpuFloat]:
+    """
+    Aligns two audio fragments based on the best offsets found by the correlator.
+    Returns two audio fragments with the same duration, where the best_offsets are placed at the same point.
+    For example, if there are two audios with duration 4s and 13s, and the best offsets are 1s and 3s,
+    the resulting audios will have duration 4s.
+    The 1st audio will be truncated from 0s to 4s, and the 2nd audio will be truncated from 3s to 7s.
+    :param best_offset1: Offset of the common part of the audio fragments in the first audio fragment.
+    :param best_offset2: Offset of the common part of the audio fragments in the second audio fragment.
+    :param audio1:
+    :param audio2:
+    :return: Tuple of truncated audio fragments and the offsets in seconds.
+    """
     offsets_diff = best_offset1 - best_offset2
     length = cp.min(cp.array([audio1.size, audio2.size])) - cp.abs(offsets_diff)
 

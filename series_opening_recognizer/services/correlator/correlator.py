@@ -3,13 +3,13 @@ from typing import Tuple, Annotated
 
 import cupy as cp
 
-from series_opening_recognizer.services.correlator.helpers import (
-    correlation_with_async_moving_window, correlation_with_sync_moving_window)
+from series_opening_recognizer.services.correlator.async_correlator import correlation_with_async_moving_window
 from series_opening_recognizer.services.correlator.fragments_normalizer import align_fragments
-from series_opening_recognizer.tp.tp import GpuFloatArray, GpuStack
+from series_opening_recognizer.services.correlator.sync_correlator import correlation_with_sync_moving_window
+from series_opening_recognizer.tp.tp import GpuFloatArray, GpuStack, GpuFloat
 
 CrossCorrelationResult = Annotated[
-    Tuple[float, float, GpuStack[GpuFloatArray, GpuFloatArray]],
+    Tuple[GpuFloat, GpuFloat, GpuStack[GpuFloatArray, GpuFloatArray]],
     'CrossCorrelationResult']
 
 logger = logging.getLogger(__name__)
