@@ -1,9 +1,11 @@
+from series_opening_recognizer.config import Config
 from series_opening_recognizer.processors.audio_files import recognise_from_audio_files
 
 
 def test_recognise_from_audio_files():
+    cfg = Config()
     files = [f'assets/audio_files/{i}.wav' for i in range(1, 8)]
-    recognised = recognise_from_audio_files(files)
+    recognised = recognise_from_audio_files(files, cfg)
 
     for file, interval in recognised.items():
         print(file, interval, interval.end - interval.start)

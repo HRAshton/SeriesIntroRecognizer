@@ -1,17 +1,18 @@
 import cupy as cp
 
-from series_opening_recognizer.configuration import RATE
+from series_opening_recognizer.config import Config
 from series_opening_recognizer.services.correlator.fragments_normalizer import align_fragments
 
 
 def test_return_type():
-    best_offset1 = cp.array(0 * RATE)
-    best_offset2 = cp.array(2 * RATE)
-    audio1 = cp.random.default_rng(0).random(10 * RATE)
-    audio2 = cp.random.default_rng(0).random(10 * RATE)
+    cfg = Config()
+    best_offset1 = cp.array(0 * cfg.RATE)
+    best_offset2 = cp.array(2 * cfg.RATE)
+    audio1 = cp.random.default_rng(0).random(10 * cfg.RATE)
+    audio2 = cp.random.default_rng(0).random(10 * cfg.RATE)
 
     truncated_audio1, truncated_audio2, offset1_secs, offset2_secs = \
-        align_fragments(best_offset1, best_offset2, audio1, audio2)
+        align_fragments(best_offset1, best_offset2, audio1, audio2, cfg)
 
     assert isinstance(truncated_audio1, cp.ndarray)
     assert isinstance(truncated_audio2, cp.ndarray)
@@ -20,13 +21,14 @@ def test_return_type():
 
 
 def test_return_cupy_data():
-    best_offset1 = cp.array(1 * RATE)
-    best_offset2 = cp.array(0 * RATE)
-    audio1 = cp.random.default_rng(0).random(10 * RATE)
-    audio2 = cp.random.default_rng(0).random(10 * RATE)
+    cfg = Config()
+    best_offset1 = cp.array(1 * cfg.RATE)
+    best_offset2 = cp.array(0 * cfg.RATE)
+    audio1 = cp.random.default_rng(0).random(10 * cfg.RATE)
+    audio2 = cp.random.default_rng(0).random(10 * cfg.RATE)
 
     truncated_audio1, truncated_audio2, offset1_secs, offset2_secs = \
-        align_fragments(best_offset1, best_offset2, audio1, audio2)
+        align_fragments(best_offset1, best_offset2, audio1, audio2, cfg)
 
     assert cp.get_array_module(truncated_audio1) == cp
     assert cp.get_array_module(truncated_audio2) == cp
@@ -35,15 +37,16 @@ def test_return_cupy_data():
 
 
 def test_return_array_of_expected_shape():
-    best_offset1 = cp.array(17 * RATE)
-    best_offset2 = cp.array(11 * RATE)
-    audio1 = cp.random.default_rng(0).random(30 * RATE)
-    audio2 = cp.random.default_rng(0).random(31 * RATE)
+    cfg = Config()
+    best_offset1 = cp.array(17 * cfg.RATE)
+    best_offset2 = cp.array(11 * cfg.RATE)
+    audio1 = cp.random.default_rng(0).random(30 * cfg.RATE)
+    audio2 = cp.random.default_rng(0).random(31 * cfg.RATE)
 
     truncated_audio1, truncated_audio2, offset1_secs, offset2_secs = \
-        align_fragments(best_offset1, best_offset2, audio1, audio2)
+        align_fragments(best_offset1, best_offset2, audio1, audio2, cfg)
 
-    expected_length = (30 - (17 - 11)) * RATE
+    expected_length = (30 - (17 - 11)) * cfg.RATE
     assert truncated_audio1.shape == (expected_length,)
     assert truncated_audio2.shape == (expected_length,)
     assert offset1_secs.shape == ()
@@ -51,18 +54,19 @@ def test_return_array_of_expected_shape():
 
 
 def test_align_fragments():
+    cfg = Config()
     offset1_of_common_fragment = 3
     offset2_of_common_fragment = 1
-    best_offset1 = cp.array(offset1_of_common_fragment * RATE)
-    best_offset2 = cp.array(offset2_of_common_fragment * RATE)
-    audio1 = cp.arange(0, 10 * RATE, 1.0)
-    audio2 = cp.arange(0, 12 * RATE, 1.0)
+    best_offset1 = cp.array(offset1_of_common_fragment * cfg.RATE)
+    best_offset2 = cp.array(offset2_of_common_fragment * cfg.RATE)
+    audio1 = cp.arange(0, 10 * cfg.RATE, 1.0)
+    audio2 = cp.arange(0, 12 * cfg.RATE, 1.0)
 
     truncated_audio1, truncated_audio2, offset1_secs, offset2_secs = \
-        align_fragments(best_offset1, best_offset2, audio1, audio2)
+        align_fragments(best_offset1, best_offset2, audio1, audio2, cfg)
 
-    expected_length = (10 - (3 - 1)) * RATE
+    expected_length = (10 - (3 - 1)) * cfg.RATE
     assert offset1_secs == 2
     assert offset2_secs == 0
-    assert cp.allclose(truncated_audio1, audio1[2 * RATE:2 * RATE + expected_length])
+    assert cp.allclose(truncated_audio1, audio1[2 * cfg.RATE:2 * cfg.RATE + expected_length])
     assert cp.allclose(truncated_audio2, audio2[0:expected_length])

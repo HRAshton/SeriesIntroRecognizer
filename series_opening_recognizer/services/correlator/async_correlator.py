@@ -1,19 +1,19 @@
 import cupy as cp
 
-from series_opening_recognizer.configuration import MIN_SEGMENT_LENGTH_BEATS
+from series_opening_recognizer.config import Config
 from series_opening_recognizer.tp.tp import GpuFloatArray, GpuStack, GpuFloat
-
-MIN_SEGMENT_LENGTH_BEATS_GPU = cp.array(MIN_SEGMENT_LENGTH_BEATS)
 
 
 def correlation_with_async_moving_window(audio1: GpuFloatArray,
-                                         audio2: GpuFloatArray) -> GpuStack[GpuFloat, GpuFloat, GpuFloat]:
+                                         audio2: GpuFloatArray,
+                                         cfg: Config) -> GpuStack[GpuFloat, GpuFloat, GpuFloat]:
     """
     Splits audio1 into fragments of size MIN_SEGMENT_LENGTH_BEATS_GPU and calculates correlation with audio2.
     Returns a list of tuples (offset1, offset2, corr) containing data about the offset of the most similar fragment
     of audio2 for each fragment of audio1.
     :param audio1: ndarray with audio
     :param audio2: ndarray with audio
+    :param cfg: configuration
     :return: list of tuples (offset1, offset2, corr),
                 where offset1 - offset in audio1,
                       offset2 - offset in audio2,
@@ -22,10 +22,10 @@ def correlation_with_async_moving_window(audio1: GpuFloatArray,
     if cp.get_array_module(audio1) != cp or cp.get_array_module(audio2) != cp:
         raise ValueError("audios must be on GPU")
 
-    num_fragments = (audio1.shape[0] + MIN_SEGMENT_LENGTH_BEATS_GPU - 1) // MIN_SEGMENT_LENGTH_BEATS_GPU
+    num_fragments = (audio1.shape[0] + cfg.MIN_SEGMENT_LENGTH_BEATS - 1) // cfg.MIN_SEGMENT_LENGTH_BEATS
 
-    indices = cp.arange(num_fragments) * MIN_SEGMENT_LENGTH_BEATS_GPU
-    fragments = audio1[indices[:, None] + cp.arange(MIN_SEGMENT_LENGTH_BEATS_GPU)]
+    indices = cp.arange(num_fragments) * cfg.MIN_SEGMENT_LENGTH_BEATS
+    fragments = audio1[indices[:, None] + cp.arange(cfg.MIN_SEGMENT_LENGTH_BEATS)]
 
     corr_per_fragment = cp.array([cp.correlate(audio2, fragment, mode='valid') for fragment in fragments])
 

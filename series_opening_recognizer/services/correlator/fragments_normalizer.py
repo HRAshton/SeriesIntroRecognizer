@@ -2,15 +2,15 @@ from typing import Tuple
 
 import cupy as cp
 
-from series_opening_recognizer.configuration import RATE
+from series_opening_recognizer.config import Config
 from series_opening_recognizer.tp.tp import GpuFloat, GpuFloatArray, GpuInt
 
 
 @cp.fuse()
-def _compute_offsets_and_indices(offsets_diff: int, length: int) \
+def _compute_offsets_and_indices(offsets_diff: int, length: int, rate: int) \
         -> Tuple[GpuFloat, GpuFloat, GpuInt, GpuInt, GpuInt, GpuInt]:
-    offset1_secs = cp.maximum(0.0, offsets_diff / RATE)
-    offset2_secs = cp.maximum(0.0, -offsets_diff / RATE)
+    offset1_secs = cp.maximum(0.0, offsets_diff / rate)
+    offset2_secs = cp.maximum(0.0, -offsets_diff / rate)
 
     start_idx_audio1 = cp.maximum(0, offsets_diff)
     end_idx_audio1 = start_idx_audio1 + length
@@ -23,8 +23,8 @@ def _compute_offsets_and_indices(offsets_diff: int, length: int) \
 
 
 def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
-                    audio1: GpuFloatArray, audio2: GpuFloatArray) \
-        -> Tuple[GpuFloatArray, GpuFloatArray, GpuFloat, GpuFloat]:
+                    audio1: GpuFloatArray, audio2: GpuFloatArray,
+                    cfg: Config) -> Tuple[GpuFloatArray, GpuFloatArray, GpuFloat, GpuFloat]:
     """
     Aligns two audio fragments based on the best offsets found by the correlator.
     Returns two audio fragments with the same duration, where the best_offsets are placed at the same point.
@@ -35,6 +35,7 @@ def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
     :param best_offset2: Offset of the common part of the audio fragments in the second audio fragment.
     :param audio1:
     :param audio2:
+    :param cfg: Configuration.
     :return: Tuple of truncated audio fragments and the offsets in seconds.
     """
     offsets_diff = best_offset1 - best_offset2
@@ -42,7 +43,7 @@ def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
 
     (offset1_secs, offset2_secs,
      start_idx_audio1, end_idx_audio1,
-     start_idx_audio2, end_idx_audio2) = _compute_offsets_and_indices(offsets_diff, length)
+     start_idx_audio2, end_idx_audio2) = _compute_offsets_and_indices(offsets_diff, length, cfg.RATE)
 
     truncated_audio1 = audio1[start_idx_audio1:end_idx_audio1]
     truncated_audio2 = audio2[start_idx_audio2:end_idx_audio2]
