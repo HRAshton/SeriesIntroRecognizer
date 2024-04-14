@@ -3,14 +3,14 @@ from typing import Tuple
 
 import cupy as cp
 
-from series_opening_recognizer.configuration import OFFSET_SEARCHER__SEQUENTIAL_BEATS
-from series_opening_recognizer.tp.tp import GpuFloatArray
+from series_opening_recognizer.configuration import OFFSET_SEARCHER__SEQUENTIAL_INTERVALS
+from series_opening_recognizer.tp.tp import GpuFloatArray, GpuFloat
 
 logger = logging.getLogger(__name__)
 
 
-def find_offsets(corr_values: GpuFloatArray) -> Tuple[int, int] or None:
-    max_limit = cp.mean(corr_values) + 3 * cp.std(corr_values)
+def _find_limited_max_and_validate(corr_values: GpuFloatArray) -> GpuFloat or None:
+    max_limit = cp.mean(corr_values) + 2 * cp.std(corr_values)
     filtered = corr_values[corr_values < max_limit]
 
     if cp.mean(filtered) < cp.median(filtered) * 2:
@@ -21,20 +21,25 @@ def find_offsets(corr_values: GpuFloatArray) -> Tuple[int, int] or None:
         logger.debug('Fragments are the same. Skipping.')
         return None
 
-    filtered_max = cp.max(filtered)
-    threshold = filtered_max / 2
+    return cp.max(filtered)
 
-    # noinspection PyTypeChecker
-    begin_idx = int(cp.argmax(corr_values > threshold).get())
 
-    end_idx = begin_idx
-    bad_count = 0
-    for i in range(begin_idx, len(corr_values)):
-        if corr_values[i] > threshold:
-            end_idx = i
-        else:
-            bad_count += 1
-            if bad_count > OFFSET_SEARCHER__SEQUENTIAL_BEATS:
-                break
+def find_offsets(corr_values: GpuFloatArray) -> Tuple[int, int] or None:
+    limited_max = _find_limited_max_and_validate(corr_values)
+    if limited_max is None:
+        return None
+
+    threshold = limited_max / 2
+    bools = cp.array(corr_values > threshold)
+
+    # Find the first peak: start
+    begin_idx = cp.argmax(bools)
+
+    # Find the first valid end after the start
+    shifted_data = cp.lib.stride_tricks.sliding_window_view(
+        bools,
+        window_shape=(OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,))
+    all_false_windows = cp.all(~shifted_data, axis=1)
+    end_idx = cp.argmax(all_false_windows[begin_idx:]) + begin_idx
 
     return begin_idx, end_idx
