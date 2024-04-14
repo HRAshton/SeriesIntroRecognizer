@@ -7,9 +7,9 @@ import numpy as np
 from series_opening_recognizer.configuration import (MIN_SEGMENT_LENGTH_BEATS, MIN_SEGMENT_LENGTH_SEC, SERIES_WINDOW,
                                                      DEBUG_SAVE_INTERMEDIATE_RESULTS, PRECISION_SECS)
 from series_opening_recognizer.helpers.cached_iterator import iterate_with_cache
+from series_opening_recognizer.services.best_offset_finder import find_best_offset
 from series_opening_recognizer.services.correlator.correlator import calculate_correlation, CrossCorrelationResult
-from series_opening_recognizer.services.offsets_calculator.offsets_calculator import find_offsets
-from series_opening_recognizer.services.offsets_calculator.post_processing import find_most_likely_offsets
+from series_opening_recognizer.services.offsets_calculator import find_offsets
 from series_opening_recognizer.tp.interval import Interval
 from series_opening_recognizer.tp.tp import GpuFloatArray
 
@@ -86,6 +86,20 @@ def _find_offsets_for_episodes(audios: Iterable[np.ndarray]) -> Dict[int, List[I
     cp.get_default_memory_pool().free_all_blocks()
 
     return results
+
+
+def find_most_likely_offsets(offsets_by_files: Dict[int, List[Interval]]) -> Dict[int, Interval]:
+    """
+    Returns the most likely offsets for each audio file.
+    """
+    true_offsets_by_files: Dict[int, Interval] = {}
+    for idx, offsets in offsets_by_files.items():
+        true_offsets_by_files[idx] = find_best_offset(offsets)
+        logger.debug(f'For {idx}: {true_offsets_by_files[idx].start:.1f}, '
+                     f'{true_offsets_by_files[idx].end:.1f} '
+                     f'({true_offsets_by_files[idx].end - true_offsets_by_files[idx].start:.1f}s)')
+
+    return true_offsets_by_files
 
 
 def recognise_from_audio_samples(audios: Iterable[np.ndarray]) -> Dict[int, Interval]:

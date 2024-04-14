@@ -13,12 +13,12 @@ def _find_limited_max_and_validate(corr_values: GpuFloatArray) -> GpuFloat or No
     max_limit = cp.mean(corr_values) + 2 * cp.std(corr_values)
     filtered = corr_values[corr_values < max_limit]
 
-    if cp.mean(filtered) < cp.median(filtered) * 2:
-        logger.debug('Not enough correlation. Skipping.')
-        return None
-
     if filtered.shape[0] == 0:
         logger.debug('Fragments are the same. Skipping.')
+        return None
+
+    if cp.mean(filtered) < cp.median(filtered) * 2:
+        logger.debug('Not enough correlation. Skipping.')
         return None
 
     return cp.max(filtered)
