@@ -48,6 +48,6 @@ def correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatA
                                  in zip(normalized_fragments1, normalized_fragments2)])
 
     # Combine offsets and maximum correlation values
-    results = cp.stack((offsets, max_correlations), axis=-1)
+    results = cp.stack((offsets, max_correlations), axis=-1, dtype=cp.float32)
 
     return results
