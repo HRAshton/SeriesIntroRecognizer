@@ -4,3 +4,4 @@ numpy~=1.26.4
 scipy~=1.13.0
 cupy-cuda12x~=13.0.0
 pytest~=8.1.1
+soundfile[tests]~=0.12.1

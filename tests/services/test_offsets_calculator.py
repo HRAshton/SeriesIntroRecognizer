@@ -80,3 +80,16 @@ def test__plateau_with_extreme_high_peaks__correct_offsets():
 
     assert find_offsets_result == (3 * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,
                                    (3 + 4) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
+
+
+def test__plateau_on_edge__correct_offsets():
+    cfg = Config()
+    low1 = cp.zeros(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 8)
+    high = cp.ones(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 3) * 12
+    corr_values = cp.concatenate([low1, high], dtype=cp.float32)
+    corr_values += cp.random.rand(corr_values.shape[0]) * 0.1
+
+    find_offsets_result = find_offsets(corr_values, cfg)
+
+    assert find_offsets_result == (8 * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,
+                                   (8 + 3) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
