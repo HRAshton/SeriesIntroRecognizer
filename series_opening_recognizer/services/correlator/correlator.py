@@ -15,6 +15,13 @@ CrossCorrelationResult = Annotated[
 logger = logging.getLogger(__name__)
 
 
+def _get_offsets_of_best_match_beat(audio1, audio2):
+    offsets_by_windows = correlation_with_async_moving_window(audio1, audio2)
+    best_match = offsets_by_windows[cp.argmax(offsets_by_windows[:, 2])]
+
+    return best_match[0], best_match[1]
+
+
 def calculate_correlation(audio1: GpuFloatArray, audio2: GpuFloatArray) -> CrossCorrelationResult or None:
     """
     Aligns two audios and calculates correlation.
@@ -22,8 +29,7 @@ def calculate_correlation(audio1: GpuFloatArray, audio2: GpuFloatArray) -> Cross
     :param audio2: audio2
     :return: CrossCorrelationResult or None
     """
-    offsets_by_windows = correlation_with_async_moving_window(audio1, audio2)
-    best_offset1, best_offset2, _ = offsets_by_windows[cp.argmax(offsets_by_windows[:, 2])]
+    best_offset1, best_offset2 = _get_offsets_of_best_match_beat(audio1, audio2)
 
     truncated_audio1, truncated_audio2, offset1_secs, offset2_secs = \
         align_fragments(best_offset1, best_offset2, audio1, audio2)
