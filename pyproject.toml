@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "series_intro_recognizer"
-version = "0.2.0-beta"
+version = "0.2.1"
 authors = [
     { name = "HRAshton" },
 ]
@@ -15,6 +15,15 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+]
+dependencies = [
+    "setuptools~=69.2.0",
+    "librosa~=0.10.1",
+    "numpy~=1.26.4",
+    "scipy~=1.13.0",
+    "cupy-cuda12x~=13.0.0",
+    "pytest~=8.1.1",
+    "soundfile[tests]~=0.12.1"
 ]
 
 [project.urls]
