@@ -39,8 +39,9 @@ def calculate_correlation(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Con
     if (truncated_audio1.shape[0] == 0
             or truncated_audio2.shape[0] == 0
             or truncated_audio1.shape[0] != truncated_audio2.shape[0]):
-        logger.warning("Truncated audios have different lengths: %s, %s. Skipping.",
-                       truncated_audio1.shape[0], truncated_audio2.shape[0])
+        # I believe this is not possible, but just in case
+        logger.error("Truncated audios have different lengths: %s, %s. Skipping.",
+                     truncated_audio1.shape[0], truncated_audio2.shape[0])
         return None
 
     corr_by_beats = correlation_with_sync_moving_window(truncated_audio1, truncated_audio2, cfg)
