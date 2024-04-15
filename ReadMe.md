@@ -10,6 +10,10 @@ The number of episodes to be compared can be changed in configuration.
 
 ## Installation
 
+The project uses Cupy. It supports both Cuda and AMD GPUs. Please refer to
+the [Cupy installation guide](https://docs.cupy.dev/en/stable/install.html)
+to install the correct version for your system.
+
 ```bash
 pip install series_intro_recognizer
 ```
