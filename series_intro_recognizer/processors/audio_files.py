@@ -4,9 +4,9 @@ from typing import Iterator, Tuple, List
 import librosa
 import numpy as np
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.processors.audio_samples import recognise_from_audio_samples
-from series_opening_recognizer.tp.interval import Interval
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.processors.audio_samples import recognise_from_audio_samples
+from series_intro_recognizer.tp.interval import Interval
 
 logger = logging.getLogger(__name__)
 

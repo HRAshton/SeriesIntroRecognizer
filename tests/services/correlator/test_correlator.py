@@ -3,8 +3,8 @@ import math
 import cupy as cp
 import numpy as np
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.services.correlator.correlator import calculate_correlation
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.services.correlator.correlator import calculate_correlation
 
 
 def test_integration_returns_none_when_no_correlation():

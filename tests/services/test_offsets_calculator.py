@@ -1,7 +1,7 @@
 import cupy as cp
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.services.offsets_calculator import find_offsets
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.services.offsets_calculator import find_offsets
 
 
 def test__same_values__not_enough_correlation():

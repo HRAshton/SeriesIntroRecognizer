@@ -1,5 +1,5 @@
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.processors.audio_files import recognise_from_audio_files
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.processors.audio_files import recognise_from_audio_files
 
 
 def test_recognise_from_audio_files():

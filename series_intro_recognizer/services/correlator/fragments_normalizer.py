@@ -2,8 +2,8 @@ from typing import Tuple
 
 import cupy as cp
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.tp.tp import GpuFloat, GpuFloatArray, GpuInt
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.tp.tp import GpuFloat, GpuFloatArray, GpuInt
 
 
 @cp.fuse()

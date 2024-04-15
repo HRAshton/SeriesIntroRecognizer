@@ -1,7 +1,7 @@
 import numpy as np
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.processors.audio_samples import recognise_from_audio_samples
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.processors.audio_samples import recognise_from_audio_samples
 
 
 def test__no_audios__returns_empty() -> None:

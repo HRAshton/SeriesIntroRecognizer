@@ -1,8 +1,8 @@
 import cupy as cp
 import numpy as np
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.services.correlator.async_correlator import correlation_with_async_moving_window
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.services.correlator.async_correlator import correlation_with_async_moving_window
 
 
 def test_return_type():

@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.processors.audio_files import recognise_from_audio_files
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.processors.audio_files import recognise_from_audio_files
 
 testdata: list[tuple[float | None, float | None, tuple[float, float]]] = [
     (None, None, (90, 150)),

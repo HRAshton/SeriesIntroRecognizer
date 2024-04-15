@@ -4,13 +4,13 @@ from typing import Iterable, List, Dict, Tuple
 import cupy as cp
 import numpy as np
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.helpers.cached_iterator import iterate_with_cache
-from series_opening_recognizer.services.best_offset_finder import find_best_offset
-from series_opening_recognizer.services.correlator.correlator import calculate_correlation, CrossCorrelationResult
-from series_opening_recognizer.services.offsets_calculator import find_offsets
-from series_opening_recognizer.tp.interval import Interval
-from series_opening_recognizer.tp.tp import GpuFloatArray
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.helpers.cached_iterator import iterate_with_cache
+from series_intro_recognizer.services.best_offset_finder import find_best_offset
+from series_intro_recognizer.services.correlator.correlator import calculate_correlation, CrossCorrelationResult
+from series_intro_recognizer.services.offsets_calculator import find_offsets
+from series_intro_recognizer.tp.interval import Interval
+from series_intro_recognizer.tp.tp import GpuFloatArray
 
 logger = logging.getLogger(__name__)
 

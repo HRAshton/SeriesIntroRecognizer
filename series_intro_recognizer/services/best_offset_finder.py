@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 
-from series_opening_recognizer.tp.interval import Interval
+from series_intro_recognizer.tp.interval import Interval
 
 
 def find_best_offset(offsets: List[Interval]) -> Interval:

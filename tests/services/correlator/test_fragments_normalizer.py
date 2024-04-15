@@ -1,7 +1,7 @@
 import cupy as cp
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.services.correlator.fragments_normalizer import align_fragments
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.services.correlator.fragments_normalizer import align_fragments
 
 
 def test_return_type():

@@ -3,8 +3,8 @@ from typing import Tuple
 
 import cupy as cp
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.tp.tp import GpuFloatArray, GpuFloat
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.tp.tp import GpuFloatArray, GpuFloat
 
 logger = logging.getLogger(__name__)
 

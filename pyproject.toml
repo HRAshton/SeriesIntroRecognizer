@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "series_intro_recognizer"
-version = "0.1.0-beta"
+version = "0.2.0-beta"
 authors = [
     { name = "HRAshton" },
 ]

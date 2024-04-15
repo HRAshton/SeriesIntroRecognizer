@@ -2,8 +2,8 @@ from typing import List, Tuple
 
 import pytest
 
-from series_opening_recognizer.services.best_offset_finder import find_best_offset
-from series_opening_recognizer.tp.interval import Interval
+from series_intro_recognizer.services.best_offset_finder import find_best_offset
+from series_intro_recognizer.tp.interval import Interval
 
 testdata: List[Tuple[List[Tuple[int, int]], Tuple[int, int]]] = [
     (

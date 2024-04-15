@@ -1,7 +1,7 @@
 import cupy as cp
 
-from series_opening_recognizer.config import Config
-from series_opening_recognizer.tp.tp import GpuFloatArray, GpuStack, GpuFloat
+from series_intro_recognizer.config import Config
+from series_intro_recognizer.tp.tp import GpuFloatArray, GpuStack, GpuFloat
 
 
 def correlation_with_async_moving_window(audio1: GpuFloatArray,

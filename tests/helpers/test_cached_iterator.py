@@ -1,6 +1,6 @@
 import pytest
 
-from series_opening_recognizer.helpers.cached_iterator import iterate_with_cache
+from series_intro_recognizer.helpers.cached_iterator import iterate_with_cache
 
 
 def test_returns_empty_list():
