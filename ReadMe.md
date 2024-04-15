@@ -1,4 +1,4 @@
-# SeriesOpeningRecogniser
+# SeriesIntroRecognizer
 
 Comparing episodes of a series to find the opening/endings of the series.
 
@@ -7,6 +7,12 @@ episode and compares them to find the common part of the series.
 
 To reduce the number of comparisons, the library compares 4 sequential episodes.
 The number of episodes to be compared can be changed in configuration.
+
+## Installation
+
+```bash
+pip install series_intro_recognizer
+```
 
 ## Options
 
