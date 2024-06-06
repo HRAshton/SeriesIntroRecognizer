@@ -13,24 +13,6 @@ def test__same_values__not_enough_correlation():
     assert find_offsets_result is None
 
 
-def test__random_values__not_enough_correlation():
-    cfg = Config()
-    corr_values = cp.random.rand(10)
-
-    find_offsets_result = find_offsets(corr_values, cfg)
-
-    assert find_offsets_result is None
-
-
-def test__sequential_values__not_enough_correlation():
-    cfg = Config()
-    corr_values = cp.array([i for i in range(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 2)])
-
-    find_offsets_result = find_offsets(corr_values, cfg)
-
-    assert find_offsets_result is None
-
-
 def test__plateau__correct_offsets():
     cfg = Config()
     low1 = cp.zeros(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 3)
@@ -42,16 +24,16 @@ def test__plateau__correct_offsets():
     find_offsets_result = find_offsets(corr_values, cfg)
 
     assert find_offsets_result == (3 * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,
-                                   (3 + 4) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
+                                   (3 + 4) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS - 1)
 
 
 def test__plateau_with_gaps__correct_offsets():
     cfg = Config()
     low1 = cp.zeros(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 3)
     high1 = cp.ones(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 4) * 12
-    low2 = cp.ones(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS - 1)  # short gap
+    low2 = cp.ones(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)  # short gap
     high2 = cp.ones(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 3) * 12
-    low3 = cp.zeros(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)  # long gap
+    low3 = cp.zeros(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS + 1)  # long gap
     high3 = cp.ones(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 4) * 12
     low4 = cp.zeros(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS * 10)
     corr_values = cp.concatenate([low1, high1, low2, high2, low3, high3, low4], dtype=cp.float32)
@@ -79,7 +61,7 @@ def test__plateau_with_extreme_high_peaks__correct_offsets():
     find_offsets_result = find_offsets(corr_values, cfg)
 
     assert find_offsets_result == (3 * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,
-                                   (3 + 4) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
+                                   (3 + 4) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS - 1)
 
 
 def test__plateau_on_edge__correct_offsets():
@@ -92,4 +74,4 @@ def test__plateau_on_edge__correct_offsets():
     find_offsets_result = find_offsets(corr_values, cfg)
 
     assert find_offsets_result == (8 * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,
-                                   (8 + 3) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
+                                   (8 + 3) * cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS - 1)

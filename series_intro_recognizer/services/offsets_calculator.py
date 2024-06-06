@@ -9,7 +9,7 @@ from series_intro_recognizer.tp.tp import GpuFloatArray, GpuFloat
 logger = logging.getLogger(__name__)
 
 
-def _find_limited_max_and_validate(corr_values: GpuFloatArray) -> GpuFloat or None:
+def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat or None:
     max_limit = cp.mean(corr_values) + 2 * cp.std(corr_values)
     filtered = corr_values[corr_values < max_limit]
 
@@ -17,31 +17,69 @@ def _find_limited_max_and_validate(corr_values: GpuFloatArray) -> GpuFloat or No
         logger.warning('Fragments are the same. Skipping. Try to increase the samples length.')
         return None
 
-    if cp.mean(filtered) < cp.median(filtered) * 2:
-        logger.warning('Not enough correlation. Skipping. Try to increase the samples length.')
-        return None
+    return cp.max(filtered) / 2
 
-    return cp.max(filtered)
+
+def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> Tuple[int, int] or None:
+    kernel = cp.ElementwiseKernel(
+        in_params='raw bool arr, int32 max_gap_length',
+        out_params='int32 max_start, int32 max_end',
+        operation='''
+            int n = arr.size();
+            int current_start = -1;
+            int current_end = -1;
+            int longest_start = -1;
+            int longest_end = -1;
+            int gap_length = 0;
+    
+            for (int i = 0; i < n; i++) {
+                if (arr[i]) {
+                    if (current_start == -1) {
+                        current_start = i;
+                    }
+                    current_end = i;
+                    gap_length = 0;
+                } else {
+                    if (current_start != -1) {
+                        gap_length++;
+                        if (gap_length > max_gap_length) {
+                            if ((longest_start == -1) || (current_end - current_start > longest_end - longest_start)) {
+                                longest_start = current_start;
+                                longest_end = current_end;
+                            }
+                            current_start = -1;
+                            current_end = -1;
+                            gap_length = 0;
+                        }
+                    }
+                }
+            }
+    
+            if ((current_start != -1) && (current_end - current_start > longest_end - longest_start)) {
+                longest_start = current_start;
+                longest_end = current_end;
+            }
+    
+            max_start = longest_start;
+            max_end = longest_end;
+        ''',
+        name='longest_sequence_with_gaps_gpu'
+    )
+
+    max_start = cp.zeros(1, dtype=cp.int32)
+    max_end = cp.zeros(1, dtype=cp.int32)
+
+    kernel(arr, max_gap_length, max_start, max_end)
+
+    return int(max_start[0]), int(max_end[0])
 
 
 def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> Tuple[int, int] or None:
-    limited_max = _find_limited_max_and_validate(corr_values)
-    if limited_max is None:
+    threshold = _get_threshold(corr_values)
+    if threshold is None:
         return None
 
-    threshold = limited_max / 2
-    bools = cp.array(corr_values > threshold)
+    bools = cp.asarray(corr_values > threshold)
+    start, end = _longest_sequence_with_gaps(bools, cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
 
-    # Find the first peak: start
-    begin_idx = cp.argmax(bools)
-
-    # Find the first valid end after the start
-    shifted_data = cp.lib.stride_tricks.sliding_window_view(
-        bools,
-        window_shape=(cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS,))
-    all_false_windows = cp.all(~shifted_data, axis=1)
-    end_idx = cp.argmax(all_false_windows[begin_idx:]) + begin_idx
-    if end_idx == begin_idx:
-        end_idx = bools.shape[0]
-
-    return begin_idx, end_idx
+    return start, end
