@@ -20,7 +20,7 @@ def correlation_with_async_moving_window(audio1: GpuFloatArray,
                       corr - correlation coefficient
     """
     if cp.get_array_module(audio1) != cp or cp.get_array_module(audio2) != cp:
-        raise ValueError("audios must be on GPU")
+        raise ValueError('audios must be on GPU')
 
     num_fragments = (audio1.shape[0] + cfg.MIN_SEGMENT_LENGTH_BEATS - 1) // cfg.MIN_SEGMENT_LENGTH_BEATS
 

@@ -33,15 +33,16 @@ def test_integration_calculates_correctly():
 
     precision_beats_multiplier = cfg.RATE * cfg.PRECISION_SECS
 
-    assert cp.isclose(result[0], cp.array(0)), "Audio 1 should have a correct offset"
-    assert cp.isclose(result[1], cp.array(3.1)), "Audio 2 should have a correct offset"
-    assert result[2].shape[0] == int((30 - (7.3 - 4.2)) / cfg.PRECISION_SECS), "Correlation should have correct size"
-    assert result[2].shape[1] == 2, "Correlation should have 2 columns"
+    assert cp.isclose(result[0], cp.array(0)), 'Audio 1 should have a correct offset'
+    assert cp.isclose(result[1], cp.array(3.1)), 'Audio 2 should have a correct offset'
+    assert result[2].shape[0] == int((30 - (7.3 - 4.2)) / cfg.PRECISION_SECS), \
+        'Correlation should have correct size'
+    assert result[2].shape[1] == 2, 'Correlation should have 2 columns'
 
     corr = result[2].get()
     observed_beat_values = corr[:, 0]
     expected_beat_values = cp.arange(0, observed_beat_values.size, 1) * precision_beats_multiplier
-    assert np.allclose(observed_beat_values, expected_beat_values), "Correlation should have correct indices"
+    assert np.allclose(observed_beat_values, expected_beat_values), 'Correlation should have correct indices'
 
     values = corr[:, 1]
     mean = np.mean(values)
@@ -50,7 +51,7 @@ def test_integration_calculates_correctly():
     idx_end = math.ceil((offset1 + common_part_size) / precision_beats_multiplier)
     peak_mask = np.zeros(values.shape[0], dtype=bool)
     peak_mask[idx_start:idx_end] = True
-    assert np.all(values[peak_mask] > mean), "Peak values should be higher than mean"
+    assert np.all(values[peak_mask] > mean), 'Peak values should be higher than mean'
 
     non_peak_mask = ~peak_mask
-    assert np.all(values[non_peak_mask] < mean), "Non-peak values should be lower than mean"
+    assert np.all(values[non_peak_mask] < mean), 'Non-peak values should be lower than mean'

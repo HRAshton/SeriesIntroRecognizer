@@ -33,7 +33,7 @@ def test_attaches_index():
         assert b[1] == (b[0] + 1) * 100
 
 
-@pytest.mark.parametrize("n", [2, 3, 4])
+@pytest.mark.parametrize('n', [2, 3, 4])
 def test_returns_pairs(n):
     test_list = [100, 200, 300, 400, 500, 600, 700, 800, 900]
     test_iter = iter(test_list)
@@ -49,7 +49,7 @@ def test_returns_pairs(n):
             assert next_item[1] == (j, test_list[j])
 
 
-@pytest.mark.parametrize("block_size", [2, 3, 20])
+@pytest.mark.parametrize('block_size', [2, 3, 20])
 def test_invoke_iter_on_demand(block_size):
     cnt = 0
 

@@ -103,8 +103,8 @@ def test_calculates_correlation():
     peak_mask = np.zeros(result.shape[0], dtype=bool)
     peak_mask[common_part_offset:common_part_offset + common_part_duration] = True
     assert np.all(values[peak_mask] > mean_correlation), \
-        "All peak correlations should be greater than mean correlation"
+        'All peak correlations should be greater than mean correlation'
 
     non_peak_mask = ~peak_mask
     assert np.all(values[non_peak_mask] < mean_correlation), \
-        "All non-peak correlations should be less than mean correlation"
+        'All non-peak correlations should be less than mean correlation'
