@@ -8,7 +8,7 @@ from series_intro_recognizer.tp.interval import Interval
 testdata: List[Tuple[List[Tuple[int, int]], Tuple[int, int]]] = [
     (
         [(0, 10), (5, 15), (10, 20)],
-        (2, 12)
+        (2.5, 12.5)
     ),
     (
         [(2466, 3599), (0, 2257), (0, 2069), (0, 3597), (2485, 3349), (0, 3461)],
@@ -21,6 +21,10 @@ testdata: List[Tuple[List[Tuple[int, int]], Tuple[int, int]]] = [
     (
         [(0, 2600), (0, 2069), (0, 3064), (0, 1924), (0, 3289), (0, 3599)],
         (0, 2069)
+    ),
+    (
+        [(0, 2600), (0, 2600), (0, 2600), (0, 2600), (0, 2600), (0, 2600)],
+        (0, 2600)
     )
 ]
 

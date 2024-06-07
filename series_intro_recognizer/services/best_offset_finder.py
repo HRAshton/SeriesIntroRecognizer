@@ -27,7 +27,7 @@ def _fit_k(data: np.ndarray) -> int:
     return best_k
 
 
-def kmeans_clustering(values: List[float]) -> int:
+def kmeans_clustering(values: List[float]) -> float:
     data = np.array(values).reshape(-1, 1)
 
     best_k = _fit_k(data)
@@ -41,7 +41,7 @@ def kmeans_clustering(values: List[float]) -> int:
 
     median_of_largest_cluster = np.median(largest_cluster_data)
 
-    return int(median_of_largest_cluster)
+    return median_of_largest_cluster
 
 
 def find_best_offset(offsets: List[Interval]) -> Interval:
