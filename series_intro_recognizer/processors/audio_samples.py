@@ -9,6 +9,7 @@ from series_intro_recognizer.helpers.cached_iterator import iterate_with_cache
 from series_intro_recognizer.services.best_offset_finder import find_best_offset
 from series_intro_recognizer.services.correlator.correlator import calculate_correlation, CrossCorrelationResult
 from series_intro_recognizer.services.offsets_calculator import find_offsets
+from series_intro_recognizer.services.interval_improver import improve_interval
 from series_intro_recognizer.tp.interval import Interval
 from series_intro_recognizer.tp.tp import GpuFloatArray
 
@@ -72,15 +73,25 @@ def _find_offsets_for_episode(idx1: int, audio1: np.ndarray,
 
     # Step 3: Calculate the final offsets
     offset1_secs, offset2_secs, _ = corr_result
-    begin1_start_secs = float(offset1_secs + offsets_result[0] * cfg.PRECISION_SECS)
-    end1_start_secs = float(offset1_secs + offsets_result[1] * cfg.PRECISION_SECS)
-    begin2_start_secs = float(offset2_secs + offsets_result[0] * cfg.PRECISION_SECS)
-    end2_start_secs = float(offset2_secs + offsets_result[1] * cfg.PRECISION_SECS)
+    begin1_secs = float(offset1_secs + offsets_result[0] * cfg.PRECISION_SECS)
+    end1_secs = float(offset1_secs + offsets_result[1] * cfg.PRECISION_SECS)
+    begin2_secs = float(offset2_secs + offsets_result[0] * cfg.PRECISION_SECS)
+    end2_secs = float(offset2_secs + offsets_result[1] * cfg.PRECISION_SECS)
 
-    logger.debug('Found offsets: %s, %s, %s, %s for %s and %s',
-                 begin1_start_secs, end1_start_secs, begin2_start_secs, end2_start_secs, idx1, idx2)
+    # Step 4: Create intervals
+    interval1 = Interval(begin1_secs, end1_secs)
+    interval2 = Interval(begin2_secs, end2_secs)
 
-    return Interval(begin1_start_secs, end1_start_secs), Interval(begin2_start_secs, end2_start_secs)
+    # Step 4: Improve the intervals
+    audio1_duration = audio1.shape[0] / cfg.RATE
+    audio2_duration = audio2.shape[0] / cfg.RATE
+    improved_interval1 = improve_interval(interval1, audio1_duration, cfg)
+    improved_interval2 = improve_interval(interval2, audio2_duration, cfg)
+
+    logger.debug('Found offsets: %s, %s for %s and %s',
+                 improved_interval1, improved_interval2, idx1, idx2)
+
+    return improved_interval1, improved_interval2
 
 
 def _find_offsets_for_episodes(audios: Iterable[np.ndarray], cfg: Config) -> Dict[int, List[Interval]]:
