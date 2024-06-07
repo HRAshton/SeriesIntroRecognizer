@@ -1,3 +1,4 @@
+import math
 from typing import List
 
 import numpy as np
@@ -46,7 +47,7 @@ def kmeans_clustering(values: List[float]) -> float:
 
 def _find_best_offset(offsets: list[float], cfg: Config) -> float:
     if not offsets or len(offsets) == 0:
-        return float('nan')
+        return math.nan
 
     if np.allclose(offsets, offsets[0], atol=cfg.PRECISION_SECS / 2):
         return offsets[0]
