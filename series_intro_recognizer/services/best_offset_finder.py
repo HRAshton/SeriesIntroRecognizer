@@ -1,3 +1,4 @@
+import warnings
 from typing import List
 
 import numpy as np
@@ -10,7 +11,8 @@ from series_intro_recognizer.tp.interval import Interval
 def _fit_k(data: np.ndarray) -> int:
     best_k = 2
     best_silhouette_score = -1
-    for k in range(2, min(data.size - 1, 10)):  # You can adjust the range as needed
+    max_clusters = np.unique(data).size
+    for k in range(2, min(max_clusters - 1, 10)):
         kmeans = KMeans(n_clusters=k, random_state=0).fit(data)
         labels = kmeans.labels_
         if len(set(labels)) == 1:
@@ -49,7 +51,9 @@ def find_best_offset(offsets: List[Interval]) -> Interval:
     start_offsets = [offset.start for offset in offsets]
     end_offsets = [offset.end for offset in offsets]
 
-    start_median = kmeans_clustering(start_offsets)
-    end_median = kmeans_clustering(end_offsets)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        start_median = kmeans_clustering(start_offsets)
+        end_median = kmeans_clustering(end_offsets)
 
     return Interval(start_median, end_median)
