@@ -66,6 +66,10 @@ the output intervals. Please, add it manually.
 samples are not enough to find the opening OR the opening takes more than
 ~50% of the episode.
 
+**WARNING #4**: There is a well-known memory leak in sklearn. You will see a warning
+when running the app. The memory leak should not be a problem for a short run,
+but it is recommended to add `OMP_NUM_THREADS=1` to the environment variables.
+
 ## Usage
 
 You can find other examples in the tests/processors folder.
