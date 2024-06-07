@@ -28,21 +28,24 @@ def _fit_k(data: np.ndarray) -> int:
     return best_k
 
 
-def kmeans_clustering(values: List[float]) -> float:
+def _kmeans_clustering(values: List[float]) -> float:
     data = np.array(values).reshape(-1, 1)
 
     best_k = _fit_k(data)
     kmeans = KMeans(n_clusters=best_k, random_state=0).fit(data)
     labels = kmeans.labels_
 
-    clusters = {i: data[labels == i] for i in range(best_k)}
+    clusters = [data[labels == i] for i in range(best_k)]
 
-    largest_cluster = max(clusters, key=lambda x: len(clusters[x]))
-    largest_cluster_data = clusters[largest_cluster]
+    max_cluster_size = max(len(cluster) for cluster in clusters)
+    largest_clusters = [cluster
+                        for cluster in clusters
+                        if len(cluster) == max_cluster_size]
+    best_cluster = min(largest_clusters, key=lambda x: np.ptp(x))
 
-    median_of_largest_cluster = np.median(largest_cluster_data)
+    median_of_best_cluster = np.median(best_cluster)
 
-    return median_of_largest_cluster
+    return float(median_of_best_cluster)
 
 
 def _find_best_offset(offsets: list[float], cfg: Config) -> float:
@@ -52,7 +55,11 @@ def _find_best_offset(offsets: list[float], cfg: Config) -> float:
     if np.allclose(offsets, offsets[0], atol=cfg.PRECISION_SECS / 2):
         return offsets[0]
 
-    return float(kmeans_clustering(offsets))
+    non_nan_offsets = [offset for offset in offsets if not math.isnan(offset)]
+    if len(non_nan_offsets) == 0:
+        return math.nan
+
+    return _kmeans_clustering(non_nan_offsets)
 
 
 def find_best_offset(offsets: List[Interval], cfg: Config) -> Interval:

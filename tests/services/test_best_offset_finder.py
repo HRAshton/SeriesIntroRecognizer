@@ -1,3 +1,4 @@
+import math
 from typing import List, Tuple
 
 import pytest
@@ -21,7 +22,7 @@ testdata: List[Tuple[List[Tuple[int, int]], Tuple[int, int]]] = [
     ),
     (
         [(0, 2600), (0, 2069), (0, 3064), (0, 1924), (0, 3289), (0, 3599)],
-        (0, 2069)
+        (0, 3289)
     ),
     (
         [(0, 2600), (0, 2600), (0, 2600), (0, 2600), (0, 2600), (0, 2600)],
@@ -35,6 +36,10 @@ testdata: List[Tuple[List[Tuple[int, int]], Tuple[int, int]]] = [
         [(0.005, 2600), (0, 2600)],
         (0.005, 2600)
     ),
+    (
+        [(236.5, 281.0), (239.5, 360.5), (math.nan, math.nan), (147.5, 173.0), (165.0, 272.5)],
+        (238.0, 281.0)
+    )
 ]
 
 
