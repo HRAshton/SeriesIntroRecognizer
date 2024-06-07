@@ -8,8 +8,8 @@ from series_intro_recognizer.config import Config
 from series_intro_recognizer.helpers.cached_iterator import iterate_with_cache
 from series_intro_recognizer.services.best_offset_finder import find_best_offset
 from series_intro_recognizer.services.correlator.correlator import calculate_correlation, CrossCorrelationResult
-from series_intro_recognizer.services.offsets_calculator import find_offsets
 from series_intro_recognizer.services.interval_improver import improve_interval
+from series_intro_recognizer.services.offsets_calculator import find_offsets
 from series_intro_recognizer.tp.interval import Interval
 from series_intro_recognizer.tp.tp import GpuFloatArray
 
@@ -31,7 +31,7 @@ def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult, cf
     if not cfg.SAVE_INTERMEDIATE_RESULTS:
         return
 
-    logger.info(f'Saving correlations for {file1} and {file2}...')
+    logger.info('Saving correlations for %s and %s...', file1, file2)
     with open(f'correlations/{file1}_{file2}_{result[0]:.3f}_{result[1]:.3f}.csv', 'w') as f:
         results = []
         for corr in result[2]:
@@ -43,7 +43,7 @@ def _save_offsets_result(file1: int, file2: int, result: Tuple[int, int], cfg: C
     if not cfg.SAVE_INTERMEDIATE_RESULTS:
         return
 
-    logger.info(f'Saving offsets for {file1} and {file2}...')
+    logger.info('Saving offsets for %s and %s...', file1, file2)
     with open(f'offsets/{file1}.csv', 'a') as f:
         f.write(f'{file2},{result[0]},{result[1]}\n')
     with open(f'offsets/{file2}.csv', 'a') as f:
@@ -100,7 +100,7 @@ def _find_offsets_for_episodes(audios: Iterable[np.ndarray], cfg: Config) -> Dic
     for pair1, pair2 in pairs:
         idx1, audio1 = pair1
         idx2, audio2 = pair2
-        logger.info(f'Processing {idx1} and {idx2}...')
+        logger.info(f'Processing %s and %s...', idx1, idx2)
 
         results.setdefault(idx1, [])
         results.setdefault(idx2, [])
@@ -124,9 +124,10 @@ def _find_most_likely_offsets(offsets_by_files: Dict[int, List[Interval]], cfg: 
     true_offsets_by_files: Dict[int, Interval] = {}
     for idx, offsets in offsets_by_files.items():
         true_offsets_by_files[idx] = find_best_offset(offsets, cfg)
-        logger.debug(f'For {idx}: {true_offsets_by_files[idx].start:.1f}, '
-                     f'{true_offsets_by_files[idx].end:.1f} '
-                     f'({true_offsets_by_files[idx].end - true_offsets_by_files[idx].start:.1f}s)')
+        logger.debug('For %s: %.1f, %.1f (%.1fs)',
+                     idx,
+                     true_offsets_by_files[idx].start, true_offsets_by_files[idx].end,
+                     true_offsets_by_files[idx].end - true_offsets_by_files[idx].start)
 
     return true_offsets_by_files
 

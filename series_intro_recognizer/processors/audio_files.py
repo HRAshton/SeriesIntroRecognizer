@@ -16,7 +16,7 @@ def _load(file: str, offset: float, duration: float, cfg: Config) -> np.ndarray:
     if rate != cfg.RATE:
         raise ValueError(f'Wrong rate: {rate} != {cfg.RATE}')
 
-    logger.debug(f'Audio loaded to memory: {file} ({audio.shape[0] / cfg.RATE:.1f}s)')
+    logger.debug('Audio loaded to memory: %s (%.1fs)', file, audio.shape[0] / cfg.RATE)
 
     return audio
 
