@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 import pytest
 
+from series_intro_recognizer.config import Config
 from series_intro_recognizer.services.best_offset_finder import find_best_offset
 from series_intro_recognizer.tp.interval import Interval
 
@@ -25,15 +26,24 @@ testdata: List[Tuple[List[Tuple[int, int]], Tuple[int, int]]] = [
     (
         [(0, 2600), (0, 2600), (0, 2600), (0, 2600), (0, 2600), (0, 2600)],
         (0, 2600)
-    )
+    ),
+    (
+        [(0, 2600)],
+        (0, 2600)
+    ),
+    (
+        [(0.005, 2600), (0, 2600)],
+        (0.005, 2600)
+    ),
 ]
 
 
 @pytest.mark.parametrize('offsets, expected', testdata)
 def test_calculates_correct(offsets: List[Tuple[int, int]], expected: Tuple[int, int]) -> None:
+    cfg = Config()
     intervals = [Interval(start, end) for start, end in offsets]
     expected_interval = Interval(*expected)
 
-    result = find_best_offset(intervals)
+    result = find_best_offset(intervals, cfg)
 
     assert result == expected_interval

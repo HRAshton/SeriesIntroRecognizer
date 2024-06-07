@@ -1,10 +1,10 @@
-import warnings
 from typing import List
 
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
+from series_intro_recognizer.config import Config
 from series_intro_recognizer.tp.interval import Interval
 
 
@@ -44,16 +44,24 @@ def kmeans_clustering(values: List[float]) -> float:
     return median_of_largest_cluster
 
 
-def find_best_offset(offsets: List[Interval]) -> Interval:
+def _find_best_offset(offsets: list[float], cfg: Config) -> float:
+    if not offsets or len(offsets) == 0:
+        return float('nan')
+
+    if np.allclose(offsets, offsets[0], atol=cfg.PRECISION_SECS / 2):
+        return offsets[0]
+
+    return float(kmeans_clustering(offsets))
+
+
+def find_best_offset(offsets: List[Interval], cfg: Config) -> Interval:
     """
     Returns the most likely offsets for an audio file.
     """
     start_offsets = [offset.start for offset in offsets]
     end_offsets = [offset.end for offset in offsets]
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        start_median = kmeans_clustering(start_offsets)
-        end_median = kmeans_clustering(end_offsets)
+    start_median = _find_best_offset(start_offsets, cfg)
+    end_median = _find_best_offset(end_offsets, cfg)
 
     return Interval(start_median, end_median)

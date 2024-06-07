@@ -106,13 +106,13 @@ def _find_offsets_for_episodes(audios: Iterable[np.ndarray], cfg: Config) -> Dic
     return results
 
 
-def _find_most_likely_offsets(offsets_by_files: Dict[int, List[Interval]]) -> Dict[int, Interval]:
+def _find_most_likely_offsets(offsets_by_files: Dict[int, List[Interval]], cfg: Config) -> Dict[int, Interval]:
     """
     Returns the most likely offsets for each audio file.
     """
     true_offsets_by_files: Dict[int, Interval] = {}
     for idx, offsets in offsets_by_files.items():
-        true_offsets_by_files[idx] = find_best_offset(offsets)
+        true_offsets_by_files[idx] = find_best_offset(offsets, cfg)
         logger.debug(f'For {idx}: {true_offsets_by_files[idx].start:.1f}, '
                      f'{true_offsets_by_files[idx].end:.1f} '
                      f'({true_offsets_by_files[idx].end - true_offsets_by_files[idx].start:.1f}s)')
@@ -128,7 +128,7 @@ def recognise_from_audio_samples(audios: Iterable[np.ndarray], cfg: Config) -> L
     :return: list of recognised intervals
     """
     offsets_by_files = _find_offsets_for_episodes(audios, cfg)
-    true_offsets = _find_most_likely_offsets(offsets_by_files)
+    true_offsets = _find_most_likely_offsets(offsets_by_files, cfg)
     logger.info('Results: %s', true_offsets)
 
     results = list(true_offsets.values())
