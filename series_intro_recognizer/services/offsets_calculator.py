@@ -82,4 +82,7 @@ def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> Tuple[int, int] or 
     bools = cp.asarray(corr_values > threshold)
     start, end = _longest_sequence_with_gaps(bools, cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
 
-    return start, end
+    # Try to include the next element, because the end is exclusive
+    # However, it would be incorrect if the end is at the last element,
+    # so we need to check if it is the case.
+    return start, min(end + 1, corr_values.size)
