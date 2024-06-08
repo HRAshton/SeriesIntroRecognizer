@@ -37,6 +37,18 @@ def test__interval_too_long__replaced_with_nans():
     assert math.isnan(fixed_interval.end)
 
 
+def test__interval_close_to_start_but_disabled__no_adjustment():
+    cfg = Config()
+    cfg.ADJUSTMENT_THRESHOLD = False
+    cfg.ADJUSTMENT_THRESHOLD_SECS = 10
+    interval = Interval(10, 50)
+    audio_duration = 100
+
+    fixed_interval = improve_interval(interval, audio_duration, cfg)
+
+    assert fixed_interval == interval
+
+
 def test__interval_close_to_start__adjusted_to_start():
     cfg = Config()
     cfg.ADJUSTMENT_THRESHOLD_SECS = 10

@@ -18,6 +18,9 @@ def _adjust_borders(interval: Interval, audio_duration: float, cfg: Config) -> I
     If the interval is too close to the beginning or the end of the audio,
     it adjusts the interval to the beginning or the end of the audio.
     """
+    if cfg.ADJUSTMENT_THRESHOLD is False:
+        return interval
+
     start = 0 \
         if interval.start - cfg.ADJUSTMENT_THRESHOLD_SECS <= 0 \
         else interval.start
