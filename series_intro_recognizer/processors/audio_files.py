@@ -11,7 +11,7 @@ from series_intro_recognizer.tp.interval import Interval
 logger = logging.getLogger(__name__)
 
 
-def _load(file: str, offset: float, duration: float, cfg: Config) -> np.ndarray:
+def _load(file: str, offset: float | None, duration: float | None, cfg: Config) -> np.ndarray:
     audio, rate = librosa.load(file, sr=cfg.RATE, mono=True, offset=offset, duration=duration)
     if rate != cfg.RATE:
         raise ValueError(f'Wrong rate: {rate} != {cfg.RATE}')
@@ -21,8 +21,20 @@ def _load(file: str, offset: float, duration: float, cfg: Config) -> np.ndarray:
     return audio
 
 
-def recognise_from_audio_files(files: Iterator[Tuple[str, float | None, float | None]],
-                               cfg: Config) -> List[Interval]:
+def recognise_from_audio_files(files: Iterator[str], cfg: Config) -> List[Interval]:
+    """
+    Recognises series openings from audio files passed as file paths or file-like objects.
+    :param files: list of file paths
+    :param cfg: configuration
+    :return: list of recognised intervals
+    """
+    audio_samples_iter = map(lambda file: _load(file, None, None, cfg), files)
+    results = recognise_from_audio_samples(audio_samples_iter, cfg)
+    return results
+
+
+def recognise_from_audio_files_with_offsets(files: Iterator[Tuple[str, float | None, float | None]],
+                                            cfg: Config) -> List[Interval]:
     """
     Recognises series openings from audio files passed as file paths or file-like objects.
     If the offset or duration are passed, the audio is analysed from the offset to the offset + duration.
