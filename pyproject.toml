@@ -23,8 +23,10 @@ dependencies = [
     "scikit-learn~=1.4.2",
     "scipy~=1.13.0",
     "setuptools~=69.2.0",
-    "soundfile[tests]~=0.12.1"
 ]
+
+[project.optional-dependencies]
+dev = ["soundfile~=0.12.1"]
 
 [project.urls]
 Homepage = "https://github.com/HRAshton/SeriesIntroRecognizer"

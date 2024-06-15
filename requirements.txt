@@ -3,5 +3,4 @@ librosa~=0.10.1
 numpy~=1.26.4
 scipy~=1.13.0
 pytest~=8.1.1
-soundfile[tests]~=0.12.1
 scikit-learn~=1.4.2
