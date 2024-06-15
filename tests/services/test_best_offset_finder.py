@@ -39,6 +39,10 @@ testdata: List[Tuple[List[Tuple[int, int]], Tuple[int, int]]] = [
     (
         [(236.5, 281.0), (239.5, 360.5), (math.nan, math.nan), (147.5, 173.0), (165.0, 272.5)],
         (238.0, 281.0)
+    ),
+    (
+        [(236.5, 281.0), (math.nan, math.nan), (math.nan, math.nan), (math.nan, math.nan)],
+        (236.5, 281.0)
     )
 ]
 

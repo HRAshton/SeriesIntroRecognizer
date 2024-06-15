@@ -48,16 +48,16 @@ def _kmeans_clustering(values: List[float]) -> float:
     return float(median_of_best_cluster)
 
 
-def _find_best_offset(offsets: list[float], cfg: Config) -> float:
-    if not offsets or len(offsets) == 0:
+def _find_best_offset(offsets: List[float], cfg: Config) -> float:
+    if not offsets:
         return math.nan
-
-    if np.allclose(offsets, offsets[0], atol=cfg.PRECISION_SECS / 2):
-        return offsets[0]
 
     non_nan_offsets = [offset for offset in offsets if not math.isnan(offset)]
     if len(non_nan_offsets) == 0:
         return math.nan
+
+    if np.allclose(non_nan_offsets, non_nan_offsets[0], atol=cfg.PRECISION_SECS / 2):
+        return non_nan_offsets[0]
 
     return _kmeans_clustering(non_nan_offsets)
 
