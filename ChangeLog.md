@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0
+
+### How to update
+
+No changes are needed.
+
+### Details
+
+#### Fixed a bug where exact one non-nan offset could cause a clustering error.
+
+#### Removed CuPy from the requirements and dependencies.
+
+There are several CuPy configurations. Use the CuPy documentation to install
+the correct version for your system, e.g.:
+
+```bash
+pip install cupy-cuda12x
+```
+
+#### Moved 'soundfile' to the optional dependencies.
+
 ## 0.4.0
 
 ### How to update
