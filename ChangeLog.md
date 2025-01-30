@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### How to update
+
+Remove `# type: ignore` from your code if necessary.
+
+### Details
+
+#### Added support for mypy.
+
+#### Fixed typing issues.
+
+#### Updated package dependencies.
+
 ## 0.5.0
 
 ### How to update
