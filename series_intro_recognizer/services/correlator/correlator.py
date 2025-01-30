@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Annotated
+from typing import Annotated
 
 import cupy as cp  # type: ignore
 
@@ -10,21 +10,21 @@ from series_intro_recognizer.services.correlator.sync_correlator import correlat
 from series_intro_recognizer.tp.tp import GpuFloatArray, GpuStack, GpuFloat
 
 CrossCorrelationResult = Annotated[
-    Tuple[GpuFloat, GpuFloat, GpuStack[GpuFloatArray, GpuFloatArray]],
+    tuple[GpuFloat, GpuFloat, GpuStack[GpuFloatArray, GpuFloatArray, None]],
     'CrossCorrelationResult']
 
 logger = logging.getLogger(__name__)
 
 
 def _get_offsets_of_best_match_beat(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) \
-        -> Tuple[GpuFloat, GpuFloat]:
+        -> tuple[GpuFloat, GpuFloat]:
     offsets_by_windows = correlation_with_async_moving_window(audio1, audio2, cfg)
     best_match = offsets_by_windows[cp.argmax(offsets_by_windows[:, 2])]
 
     return best_match[0], best_match[1]
 
 
-def calculate_correlation(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) -> CrossCorrelationResult or None:
+def calculate_correlation(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) -> CrossCorrelationResult | None:
     """
     Aligns two audios and calculates correlation.
     :param audio1: audio1

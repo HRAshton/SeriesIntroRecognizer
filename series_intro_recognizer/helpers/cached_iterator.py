@@ -1,9 +1,9 @@
-from typing import TypeVar, Iterator, Tuple
+from typing import TypeVar, Iterator
 
 T = TypeVar('T')
 
 
-def iterate_with_cache(orig_iter: Iterator[T], n: int) -> Iterator[Tuple[Tuple[int, T], Tuple[int, T]]]:
+def iterate_with_cache(orig_iter: Iterator[T], n: int) -> Iterator[tuple[tuple[int, T], tuple[int, T]]]:
     """
     Iterates over an iterator, yielding pairs of N elements with a cache of N elements.
 

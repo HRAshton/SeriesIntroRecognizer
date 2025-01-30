@@ -44,7 +44,7 @@ def test__recognise_from_audio_files():
 
 
 @pytest.mark.parametrize('offset, duration, expected_interval', testdata)
-def test__recognise_from_audio_files_with_offsets(offset: float, duration: float,
+def test__recognise_from_audio_files_with_offsets(offset: float | None, duration: float | None,
                                                   expected_interval: tuple[float, float]) -> None:
     cfg = Config()
 
@@ -58,8 +58,7 @@ def test__recognise_from_audio_files_with_offsets(offset: float, duration: float
             wave[cfg.MIN_SEGMENT_LENGTH_BEATS * 3:cfg.MIN_SEGMENT_LENGTH_BEATS * 5] = common_wave
             sf.write(files[i][0], wave, cfg.RATE)
 
-        # noinspection PyTypeChecker
-        result = recognise_from_audio_files_with_offsets(files, cfg)
+        result = recognise_from_audio_files_with_offsets(iter(files), cfg)
 
         print(result)
         assert len(result) == 10

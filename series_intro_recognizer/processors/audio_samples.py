@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, List, Dict, Tuple
+from typing import Iterator
 
 import cupy as cp  # type: ignore
 import numpy as np
@@ -39,7 +39,7 @@ def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult, cf
         f.write('\n'.join(results))
 
 
-def _save_offsets_result(file1: int, file2: int, result: Tuple[int, int], cfg: Config) -> None:
+def _save_offsets_result(file1: int, file2: int, result: tuple[int, int], cfg: Config) -> None:
     if not cfg.SAVE_INTERMEDIATE_RESULTS:
         return
 
@@ -52,7 +52,7 @@ def _save_offsets_result(file1: int, file2: int, result: Tuple[int, int], cfg: C
 
 def _find_offsets_for_episode(idx1: int, audio1: np.ndarray,
                               idx2: int, audio2: np.ndarray,
-                              cfg: Config) -> Tuple[Interval, Interval] | None:
+                              cfg: Config) -> tuple[Interval, Interval] | None:
     if audio1.shape[0] < cfg.MIN_SEGMENT_LENGTH_BEATS or audio2.shape[0] < cfg.MIN_SEGMENT_LENGTH_BEATS:
         logger.warning('One of the audios is shorter than %s secs: %s, %s. Skipping.',
                        cfg.MIN_SEGMENT_LENGTH_SEC, audio1.shape[0], audio2.shape[0])
@@ -94,9 +94,9 @@ def _find_offsets_for_episode(idx1: int, audio1: np.ndarray,
     return improved_interval1, improved_interval2
 
 
-def _find_offsets_for_episodes(audios: Iterable[np.ndarray], cfg: Config) -> Dict[int, List[Interval]]:
+def _find_offsets_for_episodes(audios: Iterator[np.ndarray], cfg: Config) -> dict[int, list[Interval]]:
     pairs = iterate_with_cache(map(_load_to_gpu_and_normalize, audios), cfg.SERIES_WINDOW)
-    results: Dict[int, List[Interval]] = {}
+    results: dict[int, list[Interval]] = {}
     for pair1, pair2 in pairs:
         idx1, audio1 = pair1
         idx2, audio2 = pair2
@@ -117,11 +117,11 @@ def _find_offsets_for_episodes(audios: Iterable[np.ndarray], cfg: Config) -> Dic
     return results
 
 
-def _find_most_likely_offsets(offsets_by_files: Dict[int, List[Interval]], cfg: Config) -> Dict[int, Interval]:
+def _find_most_likely_offsets(offsets_by_files: dict[int, list[Interval]], cfg: Config) -> dict[int, Interval]:
     """
     Returns the most likely offsets for each audio file.
     """
-    true_offsets_by_files: Dict[int, Interval] = {}
+    true_offsets_by_files: dict[int, Interval] = {}
     for idx, offsets in offsets_by_files.items():
         true_offsets_by_files[idx] = find_best_offset(offsets, cfg)
         logger.debug('For %s: %.1f, %.1f (%.1fs)',
@@ -132,7 +132,7 @@ def _find_most_likely_offsets(offsets_by_files: Dict[int, List[Interval]], cfg: 
     return true_offsets_by_files
 
 
-def recognise_from_audio_samples(audios: Iterable[np.ndarray], cfg: Config) -> List[Interval]:
+def recognise_from_audio_samples(audios: Iterator[np.ndarray], cfg: Config) -> list[Interval]:
     """
     Recognises series openings from a list of audio arrays.
     :param audios: list of audio arrays
