@@ -1,5 +1,4 @@
 import logging
-from typing import Tuple
 
 import cupy as cp  # type: ignore
 
@@ -9,7 +8,7 @@ from series_intro_recognizer.tp.tp import GpuFloatArray, GpuFloat
 logger = logging.getLogger(__name__)
 
 
-def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat or None:
+def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat | None:
     max_limit = cp.mean(corr_values) + 2 * cp.std(corr_values)
     filtered = corr_values[corr_values < max_limit]
 
@@ -20,7 +19,7 @@ def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat or None:
     return cp.max(filtered) / 2
 
 
-def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> Tuple[int, int] or None:
+def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> tuple[int, int]:
     kernel = cp.ElementwiseKernel(
         in_params='raw bool arr, int32 max_gap_length',
         out_params='int32 max_start, int32 max_end',
@@ -74,7 +73,7 @@ def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> Tupl
     return int(max_start[0]), int(max_end[0])
 
 
-def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> Tuple[int, int] or None:
+def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | None:
     threshold = _get_threshold(corr_values)
     if threshold is None:
         return None

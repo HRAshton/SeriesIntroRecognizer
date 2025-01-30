@@ -1,5 +1,4 @@
 import math
-from typing import List
 
 import numpy as np
 from sklearn.cluster import KMeans  # type: ignore
@@ -28,7 +27,7 @@ def _fit_k(data: np.ndarray) -> int:
     return best_k
 
 
-def _kmeans_clustering(values: List[float]) -> float:
+def _kmeans_clustering(values: list[float]) -> float:
     data = np.array(values).reshape(-1, 1)
 
     best_k = _fit_k(data)
@@ -48,7 +47,7 @@ def _kmeans_clustering(values: List[float]) -> float:
     return float(median_of_best_cluster)
 
 
-def _find_best_offset(offsets: List[float], cfg: Config) -> float:
+def _find_best_offset(offsets: list[float], cfg: Config) -> float:
     if not offsets:
         return math.nan
 
@@ -62,7 +61,7 @@ def _find_best_offset(offsets: List[float], cfg: Config) -> float:
     return _kmeans_clustering(non_nan_offsets)
 
 
-def find_best_offset(offsets: List[Interval], cfg: Config) -> Interval:
+def find_best_offset(offsets: list[Interval], cfg: Config) -> Interval:
     """
     Returns the most likely offsets for an audio file.
     """

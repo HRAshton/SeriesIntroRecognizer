@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import cupy as cp  # type: ignore
 
 from series_intro_recognizer.config import Config
@@ -8,7 +6,7 @@ from series_intro_recognizer.tp.tp import GpuFloat, GpuFloatArray, GpuInt
 
 @cp.fuse()
 def _compute_offsets_and_indices(offsets_diff: int, length: int, rate: int) \
-        -> Tuple[GpuFloat, GpuFloat, GpuInt, GpuInt, GpuInt, GpuInt]:
+        -> tuple[GpuFloat, GpuFloat, GpuInt, GpuInt, GpuInt, GpuInt]:
     offset1_secs = cp.maximum(0.0, offsets_diff / rate)
     offset2_secs = cp.maximum(0.0, -offsets_diff / rate)
 
@@ -24,7 +22,7 @@ def _compute_offsets_and_indices(offsets_diff: int, length: int, rate: int) \
 
 def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
                     audio1: GpuFloatArray, audio2: GpuFloatArray,
-                    cfg: Config) -> Tuple[GpuFloatArray, GpuFloatArray, GpuFloat, GpuFloat]:
+                    cfg: Config) -> tuple[GpuFloatArray, GpuFloatArray, GpuFloat, GpuFloat]:
     """
     Aligns two audio fragments based on the best offsets found by the correlator.
     Returns two audio fragments with the same duration, where the best_offsets are placed at the same point.

@@ -22,7 +22,7 @@ def _normalize_fragments(fragments: GpuFloatArray) -> GpuFloatArray:
 
 
 def correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) \
-        -> GpuStack[GpuFloatArray, GpuFloatArray]:
+        -> GpuStack[GpuFloatArray, GpuFloatArray, None]:
     if cp.get_array_module(audio1) != cp or cp.get_array_module(audio2) != cp:
         raise ValueError('audios must be on GPU')
 
