@@ -1,6 +1,6 @@
-setuptools~=69.2.0
+setuptools>=69.2,<75.9
 librosa~=0.10.1
-numpy~=1.26.4
-scipy~=1.13.0
-pytest~=8.1.1
-scikit-learn~=1.4.2
+numpy>=1.26.4,<2.3.0
+scipy>=1.13,<1.16
+pytest>=8.1.1,<8.4.0
+scikit-learn>=1.4.2,<1.7.0
