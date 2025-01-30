@@ -1,7 +1,7 @@
 import logging
 from typing import Iterable, List, Dict, Tuple
 
-import cupy as cp
+import cupy as cp  # type: ignore
 import numpy as np
 
 from series_intro_recognizer.config import Config

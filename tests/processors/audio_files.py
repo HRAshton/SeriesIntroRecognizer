@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import pytest
-import soundfile as sf
+import soundfile as sf  # type: ignore
 
 from series_intro_recognizer.config import Config
 from series_intro_recognizer.processors.audio_files import recognise_from_audio_files_with_offsets, \
