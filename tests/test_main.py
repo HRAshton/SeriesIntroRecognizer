@@ -1,7 +1,10 @@
+import pytest
+
 from series_intro_recognizer.config import Config
 from series_intro_recognizer.processors.audio_files import recognise_from_audio_files
 
 
+@pytest.mark.skip(reason="test is not implemented")
 def test_recognise_from_audio_files():
     """
     Copy 8 6-minute audio files to assets/audio_files/ directory and run the test.
