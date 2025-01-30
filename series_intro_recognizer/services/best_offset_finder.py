@@ -2,8 +2,8 @@ import math
 from typing import List
 
 import numpy as np
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.cluster import KMeans  # type: ignore
+from sklearn.metrics import silhouette_score  # type: ignore
 
 from series_intro_recognizer.config import Config
 from series_intro_recognizer.tp.interval import Interval

@@ -1,6 +1,6 @@
 from typing import TypeVar
 
-import cupy as cp
+import cupy as cp  # type: ignore
 
 T1 = TypeVar('T1')
 T2 = TypeVar('T2')

@@ -1,7 +1,7 @@
 import logging
 from typing import Tuple, Annotated
 
-import cupy as cp
+import cupy as cp  # type: ignore
 
 from series_intro_recognizer.config import Config
 from series_intro_recognizer.services.correlator.async_correlator import correlation_with_async_moving_window

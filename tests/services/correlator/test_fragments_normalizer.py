@@ -1,4 +1,4 @@
-import cupy as cp
+import cupy as cp  # type: ignore
 
 from series_intro_recognizer.config import Config
 from series_intro_recognizer.services.correlator.fragments_normalizer import align_fragments
