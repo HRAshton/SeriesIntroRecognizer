@@ -1,19 +1,21 @@
+from typing import Generator
+
 import pytest
 
 from series_intro_recognizer.helpers.cached_iterator import iterate_with_cache
 
 
-def test_returns_empty_list():
-    test_list = []
+def test_returns_empty_list() -> None:
+    test_list: list[int] = []
     test_iter = iter(test_list)
 
     result = list(iterate_with_cache(test_iter, 2))
 
-    expected_result = []
+    expected_result: list[tuple[tuple[int, int], tuple[int, int]]] = []
     assert result == expected_result
 
 
-def test_returns_single_item():
+def test_returns_single_item() -> None:
     test_list = [1]
     test_iter = iter(test_list)
 
@@ -22,7 +24,7 @@ def test_returns_single_item():
     assert result == []
 
 
-def test_attaches_index():
+def test_attaches_index() -> None:
     test_list = [100, 200, 300, 400, 500, 600]
     test_iter = iter(test_list)
 
@@ -33,27 +35,27 @@ def test_attaches_index():
         assert b[1] == (b[0] + 1) * 100
 
 
-@pytest.mark.parametrize('n', [2, 3, 4])
-def test_returns_pairs(n):
+@pytest.mark.parametrize('block_size', [2, 3, 4])
+def test_returns_pairs(block_size: int) -> None:
     test_list = [100, 200, 300, 400, 500, 600, 700, 800, 900]
     test_iter = iter(test_list)
 
-    result = list(iterate_with_cache(test_iter, n))
+    result = list(iterate_with_cache(test_iter, block_size))
     print(result)
 
     # Check that 100 is attached to 200, 300, 400 and so on
     for i in range(len(test_list) - 1):
-        for j in range(i + 1, min(i + n + 1, len(test_list))):
+        for j in range(i + 1, min(i + block_size + 1, len(test_list))):
             next_item = result.pop(0)
             assert next_item[0] == (i, test_list[i])
             assert next_item[1] == (j, test_list[j])
 
 
 @pytest.mark.parametrize('block_size', [2, 3, 20])
-def test_invoke_iter_on_demand(block_size):
+def test_invoke_iter_on_demand(block_size: int) -> None:
     cnt = 0
 
-    def get_next():
+    def get_next() -> Generator[int]:
         for _ in range(100):
             nonlocal cnt
             cnt += 1

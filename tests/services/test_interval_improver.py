@@ -5,7 +5,7 @@ from series_intro_recognizer.services.interval_improver import improve_interval
 from series_intro_recognizer.tp.interval import Interval
 
 
-def test__nan_interval__no_changes():
+def test__nan_interval__no_changes() -> None:
     cfg = Config()
     interval = Interval(math.nan, math.nan)
     audio_duration = 100
@@ -15,7 +15,7 @@ def test__nan_interval__no_changes():
     assert fixed_interval == interval
 
 
-def test__regular_interval__no_changes():
+def test__regular_interval__no_changes() -> None:
     cfg = Config()
     interval = Interval(30, 50)
     audio_duration = 100
@@ -25,9 +25,9 @@ def test__regular_interval__no_changes():
     assert fixed_interval == interval
 
 
-def test__interval_too_long__replaced_with_nans():
+def test__interval_too_long__replaced_with_nans() -> None:
     cfg = Config()
-    cfg.MAX_SEGMENT_LENGTH_SEC = 100
+    cfg.max_segment_length_sec = 100
     interval = Interval(30, 150)
     audio_duration = 1000
 
@@ -37,10 +37,10 @@ def test__interval_too_long__replaced_with_nans():
     assert math.isnan(fixed_interval.end)
 
 
-def test__interval_close_to_start_but_disabled__no_adjustment():
+def test__interval_close_to_start_but_disabled__no_adjustment() -> None:
     cfg = Config()
-    cfg.ADJUSTMENT_THRESHOLD = False
-    cfg.ADJUSTMENT_THRESHOLD_SECS = 10
+    cfg.adjustment_threshold = False
+    cfg.adjustment_threshold_secs = 10
     interval = Interval(10, 50)
     audio_duration = 100
 
@@ -49,9 +49,9 @@ def test__interval_close_to_start_but_disabled__no_adjustment():
     assert fixed_interval == interval
 
 
-def test__interval_close_to_start__adjusted_to_start():
+def test__interval_close_to_start__adjusted_to_start() -> None:
     cfg = Config()
-    cfg.ADJUSTMENT_THRESHOLD_SECS = 10
+    cfg.adjustment_threshold_secs = 10
     interval = Interval(10, 50)
     audio_duration = 100
 
@@ -60,9 +60,9 @@ def test__interval_close_to_start__adjusted_to_start():
     assert fixed_interval == Interval(0, 50)
 
 
-def test__interval_close_to_end__adjusted_to_end():
+def test__interval_close_to_end__adjusted_to_end() -> None:
     cfg = Config()
-    cfg.ADJUSTMENT_THRESHOLD_SECS = 10
+    cfg.adjustment_threshold_secs = 10
     interval = Interval(30, 90)
     audio_duration = 100
 
@@ -71,9 +71,9 @@ def test__interval_close_to_end__adjusted_to_end():
     assert fixed_interval == Interval(30, 100)
 
 
-def test__interval_close_to_start_and_end__adjusted_to_start_and_end():
+def test__interval_close_to_start_and_end__adjusted_to_start_and_end() -> None:
     cfg = Config()
-    cfg.ADJUSTMENT_THRESHOLD_SECS = 10
+    cfg.adjustment_threshold_secs = 10
     interval = Interval(10, 90)
     audio_duration = 100
 

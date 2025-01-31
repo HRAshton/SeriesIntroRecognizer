@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def _load(file: str,
           offset: float | None,
           duration: float | None,
-          cfg: Config) -> np.ndarray[Any, np.dtype[np.float32]]:
+          cfg: Config) -> np.ndarray[Any, np.dtype[np.float64]]:
     offset = offset or 0
     audio, rate = librosa.load(file, sr=cfg.rate, mono=True, offset=offset, duration=duration)
     if rate != cfg.rate:
