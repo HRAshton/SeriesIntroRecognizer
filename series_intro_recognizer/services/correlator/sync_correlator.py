@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 def _create_fragments(audio: GpuFloatArray, num_frames: GpuInt, cfg: Config) -> GpuFloatArray:
-    start_indices = cp.arange(num_frames) * cfg.PRECISION_BEATS
-    fragment_indices = start_indices[:, None] + cp.arange(cfg.PRECISION_BEATS)
+    start_indices = cp.arange(num_frames) * cfg.precision_beats
+    fragment_indices = start_indices[:, None] + cp.arange(cfg.precision_beats)
     fragments = audio[fragment_indices]
     return fragments
 
@@ -29,7 +29,7 @@ def correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatA
     if audio1.shape[0] > audio2.shape[0]:
         raise ValueError('audio2 must not be shorter than audio1')
 
-    num_frames = audio1.shape[0] // cfg.PRECISION_BEATS
+    num_frames = audio1.shape[0] // cfg.precision_beats
 
     # Create arrays for fragments
     fragments1 = _create_fragments(audio1, num_frames, cfg)
@@ -45,7 +45,7 @@ def correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatA
                                  in zip(normalized_fragments1, normalized_fragments2)])
 
     # Combine offsets and maximum correlation values
-    offsets = cp.arange(num_frames) * cfg.PRECISION_BEATS
+    offsets = cp.arange(num_frames) * cfg.precision_beats
     results = cp.stack((offsets, max_correlations), axis=-1, dtype=cp.float32)
 
     return results

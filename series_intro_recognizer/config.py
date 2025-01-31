@@ -1,82 +1,96 @@
+# pylint: disable=too-many-instance-attributes
+"""
+Configuration module for the Series Intro Recognizer.
+
+This module defines a `Config` class that stores and manages
+various parameters used for audio processing. It includes
+default values, computed attributes, and documentation
+for better maintainability.
+
+Usage:
+    from series_intro_recognizer.config import Config
+    config = Config()
+"""
+
+from dataclasses import dataclass, field
+
+
+@dataclass
 class Config:
     """
-    Config file for the series opening recognizer.
+    Configuration class for the series opening recognizer.
+
+    This class stores various parameters used for audio processing, such as
+    sample rate, segment lengths, precision, and threshold values. It also
+    computes dependent attributes like segment lengths in beats and
+    offset intervals.
 
     Attributes:
-    RATE: int
-        Audio sample rate.
-    MIN_SEGMENT_LENGTH_SEC: int
-        Minimum length of the intro in seconds.
-    MIN_SEGMENT_LENGTH_BEATS: int
-        Minimum length of the intro in beats.
-    MAX_SEGMENT_LENGTH_SEC: int
-        Maximum length of the intro in seconds.
-    MAX_SEGMENT_LENGTH_BEATS: int
-        Maximum length of the intro in beats.
-    PRECISION_SECS: float
-        Precision of the correlation in seconds.
-    PRECISION_BEATS: int
-        Precision of the correlation in beats.
-    SERIES_WINDOW: int
-        Number of sequential audio samples to be matched with each other.
-        E.g. 5 means that the first sample will be matched with the next 5 samples.
-    OFFSET_SEARCHER__SEQUENTIAL_SECS: int
-        Number of sequential 'non-intro' seconds that signal the end of the intro.
-        Intro is considered to be over if the number of sequential 'non-intro' beats is greater than this value.
-    OFFSET_SEARCHER__SEQUENTIAL_INTERVALS: int
-        Number of sequential 'non-intro' beats that signal the end of the intro.
-    ADJUSTMENT_THRESHOLD: bool
-        Threshold for adjusting the borders of the intro. If the beginning
-        of the intro is closer to the beginning of the audio than this value,
-        the beginning of the intro will be set to 0. If the end of the intro
-        is closer to the end of the audio than this value, the end of the intro
-        will be set to the end of the audio.
-    ADJUSTMENT_THRESHOLD_SECS: float
-        Threshold for adjusting the borders of the intro (see ADJUSTMENT_THRESHOLD).
-    SAVE_INTERMEDIATE_RESULTS: bool
-        Save the correlation results to 'correlations' and 'offsets' folders.
-        Make sure to create the folder before running the app.
+        rate (int): Audio sample rate (Hz).
+        min_segment_length_sec (int): Minimum length of the intro in seconds.
+        max_segment_length_sec (int): Maximum length of the intro in seconds.
+        precision_secs (float): Precision of the correlation in seconds.
+        series_window (int): Number of sequential audio samples to be matched.
+        offset_searcher_sequential_secs (int): Number of sequential 'non-intro'
+            seconds that signal the end of the intro.
+        adjustment_threshold (bool): Whether to adjust the intro borders.
+        adjustment_threshold_secs (float): Threshold for border adjustment.
+        save_intermediate_results (bool): Whether to save correlation results.
+
+    Computed Properties:
+        min_segment_length_beats (int): Minimum length of the intro in beats.
+        max_segment_length_beats (int): Maximum length of the intro in beats.
+        precision_beats (int): Precision of the correlation in beats.
+        offset_searcher_sequential_intervals (int): Number of sequential
+            'non-intro' beats that signal the end of the intro.
     """
 
-    def __init__(self,
-                 rate: int = 44100,
-                 min_segment_length_sec: int = 30,
-                 max_segment_length_sec: int = 150,
-                 precision_secs: float = .5,
-                 series_window: int = 5,
-                 offset_searcher__sequential_secs: int = 30,
-                 adjustment_threshold: bool = True,
-                 adjustment_threshold_secs: float = 3,
-                 save_intermediate_results: bool = False):
+    rate: int = 44100  # Audio sample rate
+
+    min_segment_length_sec: int = 30  # Minimum length of the intro (seconds)
+    max_segment_length_sec: int = 150  # Maximum length of the intro (seconds)
+    precision_secs: float = 0.5  # Precision of the correlation (seconds)
+
+    series_window: int = 5  # Number of sequential audio samples to be matched
+
+    offset_searcher_sequential_secs: int = 30  # 'Non-intro' seconds that signal the end of the intro
+
+    adjustment_threshold: bool = True  # Whether to adjust intro borders
+    adjustment_threshold_secs: float = 3.0  # Threshold for border adjustment
+
+    save_intermediate_results: bool = False  # Save correlation results
+
+    # Computed attributes
+    _min_segment_length_beats: int = field(init=False)
+    _max_segment_length_beats: int = field(init=False)
+    _precision_beats: int = field(init=False)
+    _offset_searcher_sequential_intervals: int = field(init=False)
+
+    def __post_init__(self) -> None:
         """
-        Initialize the configuration
-        :param rate: Audio sample rate.
-        :param min_segment_length_sec: Minimum length of the intro in seconds.
-        :param max_segment_length_sec: Maximum length of the intro in seconds.
-        :param precision_secs: Precision of the correlation in seconds.
-        :param series_window: Number of sequential audio samples to be matched with each other.
-        :param offset_searcher__sequential_secs: Number of sequential 'non-intro' seconds that signal the end of the intro.
-        :param adjustment_threshold: Threshold for adjusting the borders of the intro.
-        :param adjustment_threshold_secs: Threshold for adjusting the borders of the intro to the borders of the audio.
-        :param save_intermediate_results: Save the correlation results.
+        Compute dependent attributes after initialization.
         """
-        self.RATE = rate
+        self._min_segment_length_beats = int(self.min_segment_length_sec * self.rate)
+        self._max_segment_length_beats = int(self.max_segment_length_sec * self.rate)
+        self._precision_beats = int(self.precision_secs * self.rate)
+        self._offset_searcher_sequential_intervals = int(self.offset_searcher_sequential_secs / self.precision_secs)
 
-        self.MIN_SEGMENT_LENGTH_SEC = min_segment_length_sec
-        self.MIN_SEGMENT_LENGTH_BEATS = int(min_segment_length_sec * rate)
+    @property
+    def min_segment_length_beats(self) -> int:
+        """Returns the minimum length of the intro in beats."""
+        return self._min_segment_length_beats
 
-        self.MAX_SEGMENT_LENGTH_SEC = max_segment_length_sec
-        self.MAX_SEGMENT_LENGTH_BEATS = int(max_segment_length_sec * rate)
+    @property
+    def max_segment_length_beats(self) -> int:
+        """Returns the maximum length of the intro in beats."""
+        return self._max_segment_length_beats
 
-        self.PRECISION_SECS = precision_secs
-        self.PRECISION_BEATS = int(precision_secs * rate)
+    @property
+    def precision_beats(self) -> int:
+        """Returns the precision of the correlation in beats."""
+        return self._precision_beats
 
-        self.SERIES_WINDOW = series_window
-
-        self.OFFSET_SEARCHER__SEQUENTIAL_SECS = offset_searcher__sequential_secs
-        self.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS = int(offset_searcher__sequential_secs / precision_secs)
-
-        self.ADJUSTMENT_THRESHOLD = adjustment_threshold
-        self.ADJUSTMENT_THRESHOLD_SECS = adjustment_threshold_secs
-
-        self.SAVE_INTERMEDIATE_RESULTS = save_intermediate_results
+    @property
+    def offset_searcher_sequential_intervals(self) -> int:
+        """Returns the number of sequential 'non-intro' beats that signal the end of the intro."""
+        return self._offset_searcher_sequential_intervals

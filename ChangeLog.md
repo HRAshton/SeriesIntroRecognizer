@@ -4,9 +4,12 @@
 
 ### How to update
 
-Remove `# type: ignore` from your code if necessary.
+- Update configuration initialization.
+- Remove `# type: ignore` from your code if necessary.
 
 ### Details
+
+#### Lowercased the configuration keys.
 
 #### Added support for mypy.
 
