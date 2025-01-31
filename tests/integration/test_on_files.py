@@ -11,7 +11,7 @@ def test_recognise_from_audio_files() -> None:
     :return:
     """
     cfg = Config()
-    files = [(f'assets/audio_files/{i}.wav', None, None) for i in range(1, 8)]
+    files = [(f'../assets/audio_files/{i}.wav', None, None) for i in range(1, 8)]
     recognised = recognise_from_audio_files_with_offsets(iter(files), cfg)
 
     for interval in recognised:
