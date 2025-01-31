@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+This is a formal release. No changes were made.
+
 ## 1.0.0
 
 ### How to update
