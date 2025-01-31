@@ -18,21 +18,21 @@ testdata: list[tuple[float | None, float | None, tuple[float, float]]] = [
 ]
 
 
-def test__recognise_from_audio_files():
+def test__recognise_from_audio_files() -> None:
     cfg = Config()
 
     files = [f'assets/out/test_recognise_from_audio_files_with_offsets{i}.wav'
              for i in range(10)]
 
     try:
-        common_wave = np.random.default_rng(0).random(cfg.MIN_SEGMENT_LENGTH_BEATS * 2)
+        common_wave = np.random.default_rng(0).random(cfg.min_segment_length_beats * 2)
         for i in range(len(files)):
-            wave = np.random.default_rng(i + 1).random(cfg.MIN_SEGMENT_LENGTH_BEATS * 9)
-            wave[cfg.MIN_SEGMENT_LENGTH_BEATS * 3:cfg.MIN_SEGMENT_LENGTH_BEATS * 5] = common_wave
-            sf.write(files[i], wave, cfg.RATE)
+            wave = np.random.default_rng(i + 1).random(cfg.min_segment_length_beats * 9)
+            wave[cfg.min_segment_length_beats * 3:cfg.min_segment_length_beats * 5] = common_wave
+            sf.write(files[i], wave, cfg.rate)
 
         # noinspection PyTypeChecker
-        result = recognise_from_audio_files(files, cfg)
+        result = recognise_from_audio_files(iter(files), cfg)
 
         print(result)
         assert len(result) == 10
@@ -52,11 +52,11 @@ def test__recognise_from_audio_files_with_offsets(offset: float | None, duration
              for i in range(10)]
 
     try:
-        common_wave = np.random.default_rng(0).random(cfg.MIN_SEGMENT_LENGTH_BEATS * 2)
+        common_wave = np.random.default_rng(0).random(cfg.min_segment_length_beats * 2)
         for i in range(len(files)):
-            wave = np.random.default_rng(i + 1).random(cfg.MIN_SEGMENT_LENGTH_BEATS * 9)
-            wave[cfg.MIN_SEGMENT_LENGTH_BEATS * 3:cfg.MIN_SEGMENT_LENGTH_BEATS * 5] = common_wave
-            sf.write(files[i][0], wave, cfg.RATE)
+            wave = np.random.default_rng(i + 1).random(cfg.min_segment_length_beats * 9)
+            wave[cfg.min_segment_length_beats * 3:cfg.min_segment_length_beats * 5] = common_wave
+            sf.write(files[i][0], wave, cfg.rate)
 
         result = recognise_from_audio_files_with_offsets(iter(files), cfg)
 

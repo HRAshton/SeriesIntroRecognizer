@@ -16,7 +16,7 @@ from series_intro_recognizer.tp.tp import GpuFloatArray
 logger = logging.getLogger(__name__)
 
 
-def _load_to_gpu_and_normalize(audio: np.ndarray[Any, np.dtype[np.float32]]) -> GpuFloatArray:
+def _load_to_gpu_and_normalize(audio: np.ndarray[Any, np.dtype[np.float64]]) -> GpuFloatArray:
     if audio.shape[0] == 0:
         raise ValueError('Empty audio passed.')
 
@@ -50,8 +50,8 @@ def _save_offsets_result(file1: int, file2: int, result: tuple[int, int], cfg: C
         f.write(f'{file1},{result[0]},{result[1]}\n')
 
 
-def _find_offsets_for_episode(idx1: int, audio1: np.ndarray[Any, np.dtype[np.float32]],
-                              idx2: int, audio2: np.ndarray[Any, np.dtype[np.float32]],
+def _find_offsets_for_episode(idx1: int, audio1: np.ndarray[Any, np.dtype[np.float64]],
+                              idx2: int, audio2: np.ndarray[Any, np.dtype[np.float64]],
                               cfg: Config) -> tuple[Interval, Interval] | None:
     if audio1.shape[0] < cfg.min_segment_length_beats or audio2.shape[0] < cfg.min_segment_length_beats:
         logger.warning('One of the audios is shorter than %s secs: %s, %s. Skipping.',
@@ -94,7 +94,7 @@ def _find_offsets_for_episode(idx1: int, audio1: np.ndarray[Any, np.dtype[np.flo
     return improved_interval1, improved_interval2
 
 
-def _find_offsets_for_episodes(audios: Iterator[np.ndarray[Any, np.dtype[np.float32]]],
+def _find_offsets_for_episodes(audios: Iterator[np.ndarray[Any, np.dtype[np.float64]]],
                                cfg: Config) -> dict[int, list[Interval]]:
     pairs = iterate_with_cache(map(_load_to_gpu_and_normalize, audios), cfg.series_window)
     results: dict[int, list[Interval]] = {}
@@ -133,7 +133,7 @@ def _find_most_likely_offsets(offsets_by_files: dict[int, list[Interval]], cfg: 
     return true_offsets_by_files
 
 
-def recognise_from_audio_samples(audios: Iterator[np.ndarray[Any, np.dtype[np.float32]]],
+def recognise_from_audio_samples(audios: Iterator[np.ndarray[Any, np.dtype[np.float64]]],
                                  cfg: Config) -> list[Interval]:
     """
     Recognises series openings from a list of audio arrays.

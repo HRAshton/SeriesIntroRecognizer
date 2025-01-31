@@ -7,7 +7,7 @@ from series_intro_recognizer.config import Config
 from series_intro_recognizer.services.correlator.correlator import calculate_correlation
 
 
-def test_integration_returns_none_when_no_correlation():
+def test_integration_returns_none_when_no_correlation() -> None:
     cfg = Config()
     audio1 = cp.random.default_rng(0).random(1000)
     audio2 = cp.random.default_rng(0).random(1000)
@@ -17,25 +17,26 @@ def test_integration_returns_none_when_no_correlation():
     assert result is None
 
 
-def test_integration_calculates_correctly():
+def test_integration_calculates_correctly() -> None:
     cfg = Config()
-    offset1 = int(4.2 * cfg.RATE)
-    offset2 = int(7.3 * cfg.RATE)
-    common_part_size = int(2.2 * cfg.RATE)
+    offset1 = int(4.2 * cfg.rate)
+    offset2 = int(7.3 * cfg.rate)
+    common_part_size = int(2.2 * cfg.rate)
 
-    audio1 = cp.random.default_rng(0).random(cfg.RATE * 30)
-    audio2 = cp.random.default_rng(1).random(cfg.RATE * 45)
+    audio1 = cp.random.default_rng(0).random(cfg.rate * 30)
+    audio2 = cp.random.default_rng(1).random(cfg.rate * 45)
     common_part = cp.random.default_rng(2).random(common_part_size)
     audio1[offset1:offset1 + common_part.size] = common_part
     audio2[offset2:offset2 + common_part.size] = common_part
 
     result = calculate_correlation(audio1, audio2, cfg)
 
-    precision_beats_multiplier = cfg.RATE * cfg.PRECISION_SECS
+    precision_beats_multiplier = cfg.rate * cfg.precision_secs
 
+    assert result is not None, 'Result should not be None'
     assert cp.isclose(result[0], cp.array(0)), 'Audio 1 should have a correct offset'
     assert cp.isclose(result[1], cp.array(3.1)), 'Audio 2 should have a correct offset'
-    assert result[2].shape[0] == int((30 - (7.3 - 4.2)) / cfg.PRECISION_SECS), \
+    assert result[2].shape[0] == int((30 - (7.3 - 4.2)) / cfg.precision_secs), \
         'Correlation should have correct size'
     assert result[2].shape[1] == 2, 'Correlation should have 2 columns'
 
