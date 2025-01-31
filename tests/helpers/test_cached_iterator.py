@@ -55,7 +55,7 @@ def test_returns_pairs(block_size: int) -> None:
 def test_invoke_iter_on_demand(block_size: int) -> None:
     cnt = 0
 
-    def get_next() -> Generator[int]:
+    def get_next() -> Generator[int, None, None]:
         for _ in range(100):
             nonlocal cnt
             cnt += 1
