@@ -1,4 +1,5 @@
 import math
+from typing import Any
 
 import numpy as np
 from sklearn.cluster import KMeans  # type: ignore
@@ -8,7 +9,7 @@ from series_intro_recognizer.config import Config
 from series_intro_recognizer.tp.interval import Interval
 
 
-def _fit_k(data: np.ndarray) -> int:
+def _fit_k(data: np.ndarray[Any, np.dtype[np.float32]]) -> int:
     best_k = 2
     best_silhouette_score = -1
     max_clusters = np.unique(data).size

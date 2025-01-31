@@ -1,5 +1,5 @@
 import logging
-from typing import Iterator
+from typing import Iterator, Any
 
 import librosa
 import numpy as np
@@ -11,7 +11,10 @@ from series_intro_recognizer.tp.interval import Interval
 logger = logging.getLogger(__name__)
 
 
-def _load(file: str, offset: float | None, duration: float | None, cfg: Config) -> np.ndarray:
+def _load(file: str,
+          offset: float | None,
+          duration: float | None,
+          cfg: Config) -> np.ndarray[Any, np.dtype[np.float32]]:
     offset = offset or 0
     audio, rate = librosa.load(file, sr=cfg.rate, mono=True, offset=offset, duration=duration)
     if rate != cfg.rate:
