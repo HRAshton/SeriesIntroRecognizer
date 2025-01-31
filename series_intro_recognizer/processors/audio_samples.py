@@ -28,7 +28,7 @@ def _load_to_gpu_and_normalize(audio: np.ndarray) -> GpuFloatArray:
 
 
 def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult, cfg: Config) -> None:
-    if not cfg.SAVE_INTERMEDIATE_RESULTS:
+    if not cfg.save_intermediate_results:
         return
 
     logger.info('Saving correlations for %s and %s...', file1, file2)
@@ -40,7 +40,7 @@ def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult, cf
 
 
 def _save_offsets_result(file1: int, file2: int, result: tuple[int, int], cfg: Config) -> None:
-    if not cfg.SAVE_INTERMEDIATE_RESULTS:
+    if not cfg.save_intermediate_results:
         return
 
     logger.info('Saving offsets for %s and %s...', file1, file2)
@@ -53,9 +53,9 @@ def _save_offsets_result(file1: int, file2: int, result: tuple[int, int], cfg: C
 def _find_offsets_for_episode(idx1: int, audio1: np.ndarray,
                               idx2: int, audio2: np.ndarray,
                               cfg: Config) -> tuple[Interval, Interval] | None:
-    if audio1.shape[0] < cfg.MIN_SEGMENT_LENGTH_BEATS or audio2.shape[0] < cfg.MIN_SEGMENT_LENGTH_BEATS:
+    if audio1.shape[0] < cfg.min_segment_length_beats or audio2.shape[0] < cfg.min_segment_length_beats:
         logger.warning('One of the audios is shorter than %s secs: %s, %s. Skipping.',
-                       cfg.MIN_SEGMENT_LENGTH_SEC, audio1.shape[0], audio2.shape[0])
+                       cfg.min_segment_length_sec, audio1.shape[0], audio2.shape[0])
         return None
 
     # Step 1: Adjust the audios and calculate the correlation
@@ -73,18 +73,18 @@ def _find_offsets_for_episode(idx1: int, audio1: np.ndarray,
 
     # Step 3: Calculate the final offsets
     offset1_secs, offset2_secs, _ = corr_result
-    begin1_secs = float(offset1_secs + offsets_result[0] * cfg.PRECISION_SECS)
-    end1_secs = float(offset1_secs + offsets_result[1] * cfg.PRECISION_SECS)
-    begin2_secs = float(offset2_secs + offsets_result[0] * cfg.PRECISION_SECS)
-    end2_secs = float(offset2_secs + offsets_result[1] * cfg.PRECISION_SECS)
+    begin1_secs = float(offset1_secs + offsets_result[0] * cfg.precision_secs)
+    end1_secs = float(offset1_secs + offsets_result[1] * cfg.precision_secs)
+    begin2_secs = float(offset2_secs + offsets_result[0] * cfg.precision_secs)
+    end2_secs = float(offset2_secs + offsets_result[1] * cfg.precision_secs)
 
     # Step 4: Create intervals
     interval1 = Interval(begin1_secs, end1_secs)
     interval2 = Interval(begin2_secs, end2_secs)
 
     # Step 4: Improve the intervals
-    audio1_duration = audio1.shape[0] / cfg.RATE
-    audio2_duration = audio2.shape[0] / cfg.RATE
+    audio1_duration = audio1.shape[0] / cfg.rate
+    audio2_duration = audio2.shape[0] / cfg.rate
     improved_interval1 = improve_interval(interval1, audio1_duration, cfg)
     improved_interval2 = improve_interval(interval2, audio2_duration, cfg)
 
@@ -95,7 +95,7 @@ def _find_offsets_for_episode(idx1: int, audio1: np.ndarray,
 
 
 def _find_offsets_for_episodes(audios: Iterator[np.ndarray], cfg: Config) -> dict[int, list[Interval]]:
-    pairs = iterate_with_cache(map(_load_to_gpu_and_normalize, audios), cfg.SERIES_WINDOW)
+    pairs = iterate_with_cache(map(_load_to_gpu_and_normalize, audios), cfg.series_window)
     results: dict[int, list[Interval]] = {}
     for pair1, pair2 in pairs:
         idx1, audio1 = pair1

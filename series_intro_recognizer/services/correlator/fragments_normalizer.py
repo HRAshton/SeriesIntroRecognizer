@@ -4,7 +4,7 @@ from series_intro_recognizer.config import Config
 from series_intro_recognizer.tp.tp import GpuFloat, GpuFloatArray, GpuInt
 
 
-@cp.fuse()
+@cp.fuse()  # type: ignore
 def _compute_offsets_and_indices(offsets_diff: int, length: int, rate: int) \
         -> tuple[GpuFloat, GpuFloat, GpuInt, GpuInt, GpuInt, GpuInt]:
     offset1_secs = cp.maximum(0.0, offsets_diff / rate)
@@ -41,7 +41,7 @@ def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
 
     (offset1_secs, offset2_secs,
      start_idx_audio1, end_idx_audio1,
-     start_idx_audio2, end_idx_audio2) = _compute_offsets_and_indices(offsets_diff, length, cfg.RATE)
+     start_idx_audio2, end_idx_audio2) = _compute_offsets_and_indices(offsets_diff, length, cfg.rate)
 
     truncated_audio1 = audio1[start_idx_audio1:end_idx_audio1]
     truncated_audio2 = audio2[start_idx_audio2:end_idx_audio2]

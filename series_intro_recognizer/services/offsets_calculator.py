@@ -30,7 +30,7 @@ def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> tupl
             int longest_start = -1;
             int longest_end = -1;
             int gap_length = 0;
-    
+
             for (int i = 0; i < n; i++) {
                 if (arr[i]) {
                     if (current_start == -1) {
@@ -53,12 +53,12 @@ def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> tupl
                     }
                 }
             }
-    
+
             if ((current_start != -1) && (current_end - current_start > longest_end - longest_start)) {
                 longest_start = current_start;
                 longest_end = current_end;
             }
-    
+
             max_start = longest_start;
             max_end = longest_end;
         ''',
@@ -79,7 +79,7 @@ def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | N
         return None
 
     bools = cp.asarray(corr_values > threshold)
-    start, end = _longest_sequence_with_gaps(bools, cfg.OFFSET_SEARCHER__SEQUENTIAL_INTERVALS)
+    start, end = _longest_sequence_with_gaps(bools, cfg.offset_searcher_sequential_intervals)
 
     # Try to include the next element, because the end is exclusive
     # However, it would be incorrect if the end is at the last element,

@@ -22,10 +22,10 @@ def correlation_with_async_moving_window(audio1: GpuFloatArray,
     if cp.get_array_module(audio1) != cp or cp.get_array_module(audio2) != cp:
         raise ValueError('audios must be on GPU')
 
-    num_fragments = (audio1.shape[0] + cfg.MIN_SEGMENT_LENGTH_BEATS - 1) // cfg.MIN_SEGMENT_LENGTH_BEATS
+    num_fragments = (audio1.shape[0] + cfg.min_segment_length_beats - 1) // cfg.min_segment_length_beats
 
-    indices = cp.arange(num_fragments) * cfg.MIN_SEGMENT_LENGTH_BEATS
-    fragments = audio1[indices[:, None] + cp.arange(cfg.MIN_SEGMENT_LENGTH_BEATS)]
+    indices = cp.arange(num_fragments) * cfg.min_segment_length_beats
+    fragments = audio1[indices[:, None] + cp.arange(cfg.min_segment_length_beats)]
 
     corr_per_fragment = cp.array([cp.correlate(audio2, fragment, mode='valid') for fragment in fragments])
 
