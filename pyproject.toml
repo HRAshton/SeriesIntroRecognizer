@@ -31,3 +31,6 @@ dev = ["soundfile>=0.12.1,<0.14.0"]
 [project.urls]
 Homepage = "https://github.com/HRAshton/SeriesIntroRecognizer"
 Issues = "https://github.com/HRAshton/SeriesIntroRecognizer/issues"
+
+[tool.setuptools.package-data]
+"pkgname" = ["py.typed"]
