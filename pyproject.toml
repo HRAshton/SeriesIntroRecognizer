@@ -22,7 +22,7 @@ dependencies = [
     "pytest>=8.1.1,<8.4.0",
     "scikit-learn>=1.4.2,<1.7.0",
     "scipy>=1.13,<1.16",
-    "setuptools>=69.2,<80.9",
+    "setuptools>=69.2,<80.10",
 ]
 
 [project.optional-dependencies]
