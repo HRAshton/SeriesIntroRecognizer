@@ -1,5 +1,7 @@
 # SeriesIntroRecognizer
 
+Detailed documentation is available at [Wiki](https://github.com/HRAshton/SeriesIntroRecognizer/wiki/SeriesIntroRecognizer-%E2%80%90-Wiki).
+
 Comparing episodes of a series to find the opening/endings of the series.
 
 This library receives a list of episodes, extracts the audio features of each
