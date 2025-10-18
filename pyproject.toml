@@ -32,6 +32,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/HRAshton/SeriesIntroRecognizer"
+Documentation = "https://github.com/HRAshton/SeriesIntroRecognizer/wiki/SeriesIntroRecognizer-%E2%80%90-Wiki"
 Issues = "https://github.com/HRAshton/SeriesIntroRecognizer/issues"
 
 [tool.setuptools.package-data]
