@@ -37,7 +37,7 @@ def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
     :return: Tuple of truncated audio fragments and the offsets in seconds.
     """
     offsets_diff = best_offset1 - best_offset2
-    length = cp.min(cp.array([audio1.size, audio2.size])) - cp.abs(offsets_diff)
+    length = cp.min(cp.array([audio1.size, audio2.size]))
 
     (offset1_secs, offset2_secs,
      start_idx_audio1, end_idx_audio1,
