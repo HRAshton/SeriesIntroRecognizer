@@ -27,7 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "soundfile>=0.12.1,<0.14.0",
-    "pytest>=8.1.1,<8.5.0",
+    "pytest>=8.1.1,<9.1.0",
 ]
 
 [project.urls]
