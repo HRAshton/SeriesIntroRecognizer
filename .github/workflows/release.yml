@@ -1,57 +1,48 @@
 name: Publish to PyPI and GitHub Releases
 
 on:
-  push:
-    branches:
-      - "release/**"
+  release:
+    types: [ published ]
+
+permissions:
+  id-token: write
 
 jobs:
   build:
     name: Build and Publish
     runs-on: ubuntu-latest
+    environment: release
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Fetch tags
+        run: git fetch --prune --unshallow --tags
+
+      - name: Check if tests were run by checking for 'tested-...' tag on the current commit
+        run: |
+          TAGS=$(git tag --points-at HEAD 2>&1 || true)
+          echo "DEBUG: current HEAD=$(git rev-parse --verify HEAD 2>/dev/null || echo unknown)"
+          echo "DEBUG: tags pointing at HEAD: ${TAGS:-<none>}"
+          if ! printf '%s\n' "$TAGS" | grep -q 'tested-'; then
+              echo "No 'tested-' tag found on the current commit. Aborting release."
+              echo "DEBUG: full git tag output:"
+              git tag --points-at HEAD || true
+              exit 1
+          fi
+      - name: Check if version in pyproject.toml matches the release tag
+        run: |
+          RELEASE_TAG=${GITHUB_REF#refs/tags/}
+          PROJECT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
+          echo "DEBUG: Release tag: $RELEASE_TAG"
+          echo "DEBUG: Project version: $PROJECT_VERSION"
+          if [ "$RELEASE_TAG" != "$PROJECT_VERSION" ]; then
+              echo "Version in pyproject.toml ($PROJECT_VERSION) does not match the release tag ($RELEASE_TAG). Aborting release."
+              exit 1
+          fi
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine toml
-
-      - name: Extract version from branch name
-        id: extract_version
-        run: |
-          VERSION=$(echo "${{ github.ref }}" | sed -E 's/refs\/heads\/release\///')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Update pyproject.toml version
-        run: |
-          python -c "import toml;
-          data = toml.load('pyproject.toml');
-          data['project']['version'] = '${{ env.VERSION }}';
-          with open('pyproject.toml', 'w') as f: toml.dump(data, f)"
-
-      - name: Build package
-        run: |
-          python -m build
-
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload dist/*
-
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          gh release create "v${{ env.VERSION }}" dist/* \
-            --title "Release v${{ env.VERSION }}" \
-            --generate-notes
+      - run: python -m pip install --upgrade pip build
+      - run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
