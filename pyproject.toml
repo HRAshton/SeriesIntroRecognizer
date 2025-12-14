@@ -17,17 +17,17 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "librosa>=0.10.1,<0.12.0",
-    "numpy>=1.26.4,<2.4.0",
-    "scikit-learn>=1.4.2,<1.8.0",
-    "scipy>=1.13,<1.17",
-    "setuptools>=69.2,<80.10",
+    "librosa>=0.10.1",
+    "numpy>=1.26.4",
+    "scikit-learn>=1.4.2",
+    "scipy>=1.13",
+    "setuptools>=69.2",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "soundfile>=0.12.1,<0.14.0",
-    "pytest>=8.1.1,<9.1.0",
+    "soundfile>=0.12.1",
+    "pytest>=8.1.1",
 ]
 
 [project.urls]

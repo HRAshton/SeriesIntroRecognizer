@@ -23,7 +23,7 @@ if (Test-Path $activate) {
     if ($LASTEXITCODE -ne 0) { throw "Failed to install development dependencies." }
 }
 
-pip install -r requirements-dev.txt
+pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
 if ($LASTEXITCODE -ne 0) { throw "Failed to install development dependencies." }
 
 pytest
