@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+FROM nvidia/cuda:12.9.2-cudnn-devel-ubuntu24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG RUNNER_VERSION=2.333.1
@@ -10,15 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     unzip \
     sudo \
-    python3 \
+    python3.12 \
     python3-pip \
     iputils-ping \
-    libicu70 \
-    libkrb5-3 \
-    zlib1g \
-    libssl3 \
-    liblttng-ust1 \
-    libcurl4 \
     gnupg \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
