@@ -3,6 +3,7 @@ import logging
 import cupy as cp  # type: ignore
 
 from series_intro_recognizer.config import Config
+from series_intro_recognizer.helpers.telemetry import telemetry
 from series_intro_recognizer.tp.tp import GpuFloatArray, GpuFloat
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> tupl
     return int(max_start[0]), int(max_end[0])
 
 
-def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | None:
+def _find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | None:
     if corr_values.size == 0:
         logger.warning('No correlation values provided. Skipping.')
         return None
@@ -95,3 +96,8 @@ def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | N
     # However, it would be incorrect if the end is at the last element,
     # so we need to check if it is the case.
     return start, min(end + 1, corr_values.size)
+
+
+def find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | None:
+    with telemetry.measure('find_offsets'):
+        return _find_offsets(corr_values, cfg)
