@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Iterator, Any
 
 import cupy as cp  # type: ignore
@@ -31,6 +32,9 @@ def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult, cf
     if not cfg.save_intermediate_results:
         return
 
+    if not os.path.exists('correlations'):
+        os.makedirs('correlations')
+
     logger.info('Saving correlations for %s and %s...', file1, file2)
     with open(f'correlations/{file1}_{file2}_{result[0]:.3f}_{result[1]:.3f}.csv', 'w') as f:
         results = []
@@ -42,6 +46,9 @@ def _save_corr_result(file1: int, file2: int, result: CrossCorrelationResult, cf
 def _save_offsets_result(file1: int, file2: int, result: tuple[int, int], cfg: Config) -> None:
     if not cfg.save_intermediate_results:
         return
+
+    if not os.path.exists('offsets'):
+        os.makedirs('offsets')
 
     logger.info('Saving offsets for %s and %s...', file1, file2)
     with open(f'offsets/{file1}.csv', 'a') as f:
