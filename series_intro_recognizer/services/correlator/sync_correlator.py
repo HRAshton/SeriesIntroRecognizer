@@ -3,6 +3,7 @@ import logging
 import cupy as cp  # type: ignore
 
 from series_intro_recognizer.config import Config
+from series_intro_recognizer.helpers.telemetry import telemetry
 from series_intro_recognizer.tp.tp import GpuFloatArray, GpuStack, GpuInt
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,8 @@ def _normalize_fragments(fragments: GpuFloatArray) -> GpuFloatArray:
     return (fragments - mean) / std
 
 
-def correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) \
-        -> GpuStack[GpuFloatArray, GpuFloatArray, None]:
+def _correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) \
+    -> GpuStack[GpuFloatArray, GpuFloatArray, None]:
     if cp.get_array_module(audio1) != cp or cp.get_array_module(audio2) != cp:
         raise ValueError('audios must be on GPU')
 
@@ -49,3 +50,9 @@ def correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatA
     results = cp.stack((offsets, max_correlations), axis=-1, dtype=cp.float32)
 
     return results
+
+
+def correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) \
+    -> GpuStack[GpuFloatArray, GpuFloatArray, None]:
+    with telemetry.measure('sync_correlator'):
+        return _correlation_with_sync_moving_window(audio1, audio2, cfg)

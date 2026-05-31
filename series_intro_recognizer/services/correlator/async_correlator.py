@@ -1,7 +1,29 @@
 import cupy as cp  # type: ignore
 
 from series_intro_recognizer.config import Config
+from series_intro_recognizer.helpers.telemetry import telemetry
 from series_intro_recognizer.tp.tp import GpuFloatArray, GpuStack, GpuFloat
+
+
+def _correlation_with_async_moving_window(audio1: GpuFloatArray,
+                                          audio2: GpuFloatArray,
+                                          cfg: Config) -> GpuStack[GpuFloat, GpuFloat, GpuFloat]:
+    if cp.get_array_module(audio1) != cp or cp.get_array_module(audio2) != cp:
+        raise ValueError('audios must be on GPU')
+
+    num_fragments = (audio1.shape[0] + cfg.min_segment_length_beats - 1) // cfg.min_segment_length_beats
+
+    indices = cp.arange(num_fragments) * cfg.min_segment_length_beats
+    fragments = audio1[indices[:, None] + cp.arange(cfg.min_segment_length_beats)]
+
+    corr_per_fragment = cp.array([cp.correlate(audio2, fragment, mode='valid') for fragment in fragments])
+
+    audio2_offsets = cp.argmax(corr_per_fragment, axis=1)
+    corr_peaks_per_fragment = cp.max(corr_per_fragment, axis=1)
+
+    offsets = cp.stack((indices, audio2_offsets, corr_peaks_per_fragment), axis=-1, dtype=cp.float32)
+
+    return offsets
 
 
 def correlation_with_async_moving_window(audio1: GpuFloatArray,
@@ -19,19 +41,5 @@ def correlation_with_async_moving_window(audio1: GpuFloatArray,
                       offset2 - offset in audio2,
                       corr - correlation coefficient
     """
-    if cp.get_array_module(audio1) != cp or cp.get_array_module(audio2) != cp:
-        raise ValueError('audios must be on GPU')
-
-    num_fragments = (audio1.shape[0] + cfg.min_segment_length_beats - 1) // cfg.min_segment_length_beats
-
-    indices = cp.arange(num_fragments) * cfg.min_segment_length_beats
-    fragments = audio1[indices[:, None] + cp.arange(cfg.min_segment_length_beats)]
-
-    corr_per_fragment = cp.array([cp.correlate(audio2, fragment, mode='valid') for fragment in fragments])
-
-    audio2_offsets = cp.argmax(corr_per_fragment, axis=1)
-    corr_peaks_per_fragment = cp.max(corr_per_fragment, axis=1)
-
-    offsets = cp.stack((indices, audio2_offsets, corr_peaks_per_fragment), axis=-1, dtype=cp.float32)
-
-    return offsets
+    with telemetry.measure('async_correlator'):
+        return _correlation_with_async_moving_window(audio1, audio2, cfg)

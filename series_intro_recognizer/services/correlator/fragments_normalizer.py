@@ -1,12 +1,13 @@
 import cupy as cp  # type: ignore
 
 from series_intro_recognizer.config import Config
+from series_intro_recognizer.helpers.telemetry import telemetry
 from series_intro_recognizer.tp.tp import GpuFloat, GpuFloatArray, GpuInt
 
 
 @cp.fuse()  # type: ignore
 def _compute_offsets_and_indices(offsets_diff: int, length: int, rate: int) \
-        -> tuple[GpuFloat, GpuFloat, GpuInt, GpuInt, GpuInt, GpuInt]:
+    -> tuple[GpuFloat, GpuFloat, GpuInt, GpuInt, GpuInt, GpuInt]:
     offset1_secs = cp.maximum(0.0, offsets_diff / rate)
     offset2_secs = cp.maximum(0.0, -offsets_diff / rate)
 
@@ -18,6 +19,22 @@ def _compute_offsets_and_indices(offsets_diff: int, length: int, rate: int) \
     return (offset1_secs, offset2_secs,
             start_idx_audio1, end_idx_audio1,
             start_idx_audio2, end_idx_audio2)
+
+
+def _align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
+                     audio1: GpuFloatArray, audio2: GpuFloatArray,
+                     cfg: Config) -> tuple[GpuFloatArray, GpuFloatArray, GpuFloat, GpuFloat]:
+    offsets_diff = best_offset1 - best_offset2
+    length = cp.min(cp.array([audio1.size, audio2.size])) - cp.abs(offsets_diff)
+
+    (offset1_secs, offset2_secs,
+     start_idx_audio1, end_idx_audio1,
+     start_idx_audio2, end_idx_audio2) = _compute_offsets_and_indices(offsets_diff, length, cfg.rate)
+
+    truncated_audio1 = audio1[start_idx_audio1:end_idx_audio1]
+    truncated_audio2 = audio2[start_idx_audio2:end_idx_audio2]
+
+    return truncated_audio1, truncated_audio2, offset1_secs, offset2_secs
 
 
 def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
@@ -36,14 +53,5 @@ def align_fragments(best_offset1: GpuFloat, best_offset2: GpuFloat,
     :param cfg: Configuration.
     :return: Tuple of truncated audio fragments and the offsets in seconds.
     """
-    offsets_diff = best_offset1 - best_offset2
-    length = cp.min(cp.array([audio1.size, audio2.size])) - cp.abs(offsets_diff)
-
-    (offset1_secs, offset2_secs,
-     start_idx_audio1, end_idx_audio1,
-     start_idx_audio2, end_idx_audio2) = _compute_offsets_and_indices(offsets_diff, length, cfg.rate)
-
-    truncated_audio1 = audio1[start_idx_audio1:end_idx_audio1]
-    truncated_audio2 = audio2[start_idx_audio2:end_idx_audio2]
-
-    return truncated_audio1, truncated_audio2, offset1_secs, offset2_secs
+    with telemetry.measure('align_fragments'):
+        return _align_fragments(best_offset1, best_offset2, audio1, audio2, cfg)
