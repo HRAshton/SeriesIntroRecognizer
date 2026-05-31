@@ -8,6 +8,53 @@ from series_intro_recognizer.tp.tp import GpuFloatArray, GpuFloat
 
 logger = logging.getLogger(__name__)
 
+_LONGEST_SEQUENCE_WITH_GAPS_KERNEL = cp.RawKernel(
+    code=r'''
+    extern "C" __global__
+    void longest_sequence_with_gaps(const bool* arr, const int n, const int max_gap_length, int* out_start, int* out_end) {
+        if (blockIdx.x != 0 || threadIdx.x != 0) {
+            return;
+        }
+
+        int current_start = -1;
+        int current_end = -1;
+        int longest_start = -1;
+        int longest_end = -1;
+        int gap_length = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (arr[i]) {
+                if (current_start == -1) {
+                    current_start = i;
+                }
+                current_end = i;
+                gap_length = 0;
+            } else if (current_start != -1) {
+                gap_length++;
+                if (gap_length > max_gap_length) {
+                    if ((longest_start == -1) || (current_end - current_start > longest_end - longest_start)) {
+                        longest_start = current_start;
+                        longest_end = current_end;
+                    }
+                    current_start = -1;
+                    current_end = -1;
+                    gap_length = 0;
+                }
+            }
+        }
+
+        if ((current_start != -1) && (current_end - current_start > longest_end - longest_start)) {
+            longest_start = current_start;
+            longest_end = current_end;
+        }
+
+        out_start[0] = longest_start;
+        out_end[0] = longest_end;
+    }
+    ''',
+    name='longest_sequence_with_gaps',
+)
+
 
 def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat | None:
     max_limit = cp.mean(corr_values) + 2 * cp.std(corr_values)
@@ -21,57 +68,19 @@ def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat | None:
 
 
 def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> tuple[int, int]:
-    kernel = cp.ElementwiseKernel(
-        in_params='raw bool arr, int32 max_gap_length',
-        out_params='int32 max_start, int32 max_end',
-        operation='''
-            int n = arr.size();
-            int current_start = -1;
-            int current_end = -1;
-            int longest_start = -1;
-            int longest_end = -1;
-            int gap_length = 0;
+    n = int(arr.size)
+    if n == 0:
+        return -1, -1
 
-            for (int i = 0; i < n; i++) {
-                if (arr[i]) {
-                    if (current_start == -1) {
-                        current_start = i;
-                    }
-                    current_end = i;
-                    gap_length = 0;
-                } else {
-                    if (current_start != -1) {
-                        gap_length++;
-                        if (gap_length > max_gap_length) {
-                            if ((longest_start == -1) || (current_end - current_start > longest_end - longest_start)) {
-                                longest_start = current_start;
-                                longest_end = current_end;
-                            }
-                            current_start = -1;
-                            current_end = -1;
-                            gap_length = 0;
-                        }
-                    }
-                }
-            }
-
-            if ((current_start != -1) && (current_end - current_start > longest_end - longest_start)) {
-                longest_start = current_start;
-                longest_end = current_end;
-            }
-
-            max_start = longest_start;
-            max_end = longest_end;
-        ''',
-        name='longest_sequence_with_gaps_gpu'
+    out_start = cp.empty(1, dtype=cp.int32)
+    out_end = cp.empty(1, dtype=cp.int32)
+    _LONGEST_SEQUENCE_WITH_GAPS_KERNEL(
+        (1,),
+        (1,),
+        (arr, cp.int32(n), cp.int32(max_gap_length), out_start, out_end),
     )
 
-    max_start = cp.zeros(1, dtype=cp.int32)
-    max_end = cp.zeros(1, dtype=cp.int32)
-
-    kernel(arr, max_gap_length, max_start, max_end)
-
-    return int(max_start[0]), int(max_end[0])
+    return int(out_start[0]), int(out_end[0])
 
 
 def _find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | None:
