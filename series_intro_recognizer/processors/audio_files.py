@@ -1,8 +1,10 @@
 import logging
-from typing import Iterator, Any
+import os
+from typing import Iterator, Any, cast
 
 import librosa
 import numpy as np
+import soundfile as sf  # type: ignore
 
 from series_intro_recognizer.config import Config
 from series_intro_recognizer.processors.audio_samples import recognise_from_audio_samples
@@ -10,22 +12,34 @@ from series_intro_recognizer.tp.interval import Interval
 
 logger = logging.getLogger(__name__)
 
+AudioFile = str | os.PathLike[str]
 
-def _load(file: str,
+
+def _load(file: AudioFile,
           offset: float | None,
           duration: float | None,
           cfg: Config) -> np.ndarray[Any, np.dtype[np.float64]]:
     offset = offset or 0
-    audio, rate = librosa.load(file, sr=cfg.rate, mono=True, offset=offset, duration=duration)
+    with sf.SoundFile(file) as sound_file:
+        rate = sound_file.samplerate
+        if offset:
+            sound_file.seek(int(offset * rate))
+
+        frames = int(duration * rate) if duration is not None else -1
+        audio = sound_file.read(frames=frames, dtype='float32', always_2d=False).T
+
+    if audio.ndim > 1:
+        audio = librosa.to_mono(audio)
+
     if rate != cfg.rate:
-        raise ValueError(f'Wrong rate: {rate} != {cfg.rate}')
+        audio = librosa.resample(audio, orig_sr=rate, target_sr=cfg.rate)
 
     logger.debug('Audio loaded to memory: %s (%.1fs)', file, audio.shape[0] / cfg.rate)
 
-    return audio
+    return cast(np.ndarray[Any, np.dtype[np.float64]], audio)
 
 
-def recognise_from_audio_files(files: Iterator[str], cfg: Config) -> list[Interval]:
+def recognise_from_audio_files(files: Iterator[AudioFile], cfg: Config) -> list[Interval]:
     """
     Recognises series openings from audio files passed as file paths or file-like objects.
     :param files: list of file paths
@@ -37,7 +51,7 @@ def recognise_from_audio_files(files: Iterator[str], cfg: Config) -> list[Interv
     return results
 
 
-def recognise_from_audio_files_with_offsets(files: Iterator[tuple[str, float | None, float | None]],
+def recognise_from_audio_files_with_offsets(files: Iterator[tuple[AudioFile, float | None, float | None]],
                                             cfg: Config) -> list[Interval]:
     """
     Recognises series openings from audio files passed as file paths or file-like objects.

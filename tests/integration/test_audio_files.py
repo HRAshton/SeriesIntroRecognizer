@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import audioread  # type: ignore
 import numpy as np
 import pytest
 import soundfile as sf  # type: ignore
@@ -36,6 +37,27 @@ def test__recognise_from_audio_files(tmp_path: Path) -> None:
     assert len(result) == 10
     for interval in result:
         assert interval == testdata[0][2]
+
+
+def test__recognise_from_audio_files_does_not_probe_audioread(tmp_path: Path,
+                                                              monkeypatch: pytest.MonkeyPatch) -> None:
+    cfg = Config()
+    files = [str(tmp_path / f'episode{i}.wav') for i in range(2)]
+
+    common_wave = np.random.default_rng(0).random(cfg.min_segment_length_beats * 2)
+    for i, path in enumerate(files):
+        wave = np.random.default_rng(i + 1).random(cfg.min_segment_length_beats * 9)
+        wave[cfg.min_segment_length_beats * 3:cfg.min_segment_length_beats * 5] = common_wave
+        sf.write(path, wave, cfg.rate)
+
+    def fail_available_backends() -> list[type[object]]:
+        raise AssertionError('audioread backends should not be probed when loading files')
+
+    monkeypatch.setattr(audioread, 'available_backends', fail_available_backends)
+
+    result = recognise_from_audio_files(iter(files), cfg)
+
+    assert len(result) == 2
 
 
 @pytest.mark.parametrize('offset, duration, expected_interval', testdata)
