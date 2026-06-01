@@ -16,10 +16,49 @@ CrossCorrelationResult = Annotated[
 logger = logging.getLogger(__name__)
 
 
+def _get_best_offsets_pair(
+    offsets_by_windows: GpuStack[GpuFloat, GpuFloat, GpuFloat],
+    cfg: Config,
+) -> GpuFloatArray:
+    """
+    Select best async match.
+
+    Prefer lag clusters:
+        lag = offset2 - offset1
+
+    Rank by:
+        1. number of candidates with similar lag
+        2. best score inside that lag cluster
+    """
+    if cfg.correlator_always_choose_best_score:
+        return offsets_by_windows[cp.argmax(offsets_by_windows[:, 2])]
+
+    lags = offsets_by_windows[:, 1] - offsets_by_windows[:, 0]
+    scores = offsets_by_windows[:, 2]
+
+    unique_lags, inverse, counts = cp.unique(
+        lags,
+        return_inverse=True,
+        return_counts=True,
+    )
+
+    best_count = cp.max(counts)
+
+    if int(best_count) <= 1:
+        return offsets_by_windows[cp.argmax(scores)]
+
+    # lag values belonging to the largest cluster
+    best_lag_ids = cp.where(counts == best_count)[0]
+    candidate_mask = cp.isin(inverse, best_lag_ids)
+    candidate_scores = cp.where(candidate_mask, scores, -cp.inf)
+
+    return offsets_by_windows[cp.argmax(candidate_scores)]
+
+
 def _get_offsets_of_best_match_beat(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) \
         -> tuple[GpuFloat, GpuFloat]:
     offsets_by_windows = correlation_with_async_moving_window(audio1, audio2, cfg)
-    best_match = offsets_by_windows[cp.argmax(offsets_by_windows[:, 2])]
+    best_match = _get_best_offsets_pair(offsets_by_windows, cfg)
 
     return best_match[0], best_match[1]
 
