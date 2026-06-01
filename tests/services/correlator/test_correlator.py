@@ -4,7 +4,65 @@ import cupy as cp  # type: ignore
 import numpy as np
 
 from series_intro_recognizer.config import Config
-from series_intro_recognizer.services.correlator.correlator import calculate_correlation
+from series_intro_recognizer.services.correlator.correlator import calculate_correlation, _get_best_offsets_pair
+
+
+def _assert_cupy_row_equal(actual: cp.ndarray, expected: cp.ndarray) -> None:
+    assert cp.allclose(actual, expected), f'{actual.get()} != {expected.get()}'
+
+
+def test_get_best_offsets_pair_always_choose_best_score() -> None:
+    cfg = Config()
+    cfg.correlator_always_choose_best_score = True
+    offsets_by_windows = cp.asarray([
+        [0, 10, 0.8],
+        [100, 110, 0.7],
+        [200, 500, 0.9],
+    ], dtype=cp.float32)
+
+    result = _get_best_offsets_pair(offsets_by_windows, cfg)
+
+    _assert_cupy_row_equal(result, offsets_by_windows[2])
+
+
+def test_get_best_offsets_pair_prefers_largest_lag_cluster() -> None:
+    cfg = Config()
+    offsets_by_windows = cp.asarray([
+        [0, 10, 0.5],
+        [100, 110, 0.7],
+        [200, 500, 0.9],
+    ], dtype=cp.float32)
+
+    result = _get_best_offsets_pair(offsets_by_windows, cfg)
+
+    _assert_cupy_row_equal(result, offsets_by_windows[1])
+
+
+def test_get_best_offsets_pair_falls_back_to_best_score_when_no_lag_cluster() -> None:
+    cfg = Config()
+    offsets_by_windows = cp.asarray([
+        [0, 10, 0.5],
+        [100, 120, 0.7],
+        [200, 500, 0.9],
+    ], dtype=cp.float32)
+
+    result = _get_best_offsets_pair(offsets_by_windows, cfg)
+
+    _assert_cupy_row_equal(result, offsets_by_windows[2])
+
+
+def test_get_best_offsets_pair_uses_best_score_across_tied_lag_clusters() -> None:
+    cfg = Config()
+    offsets_by_windows = cp.asarray([
+        [0, 10, 0.5],
+        [100, 110, 0.7],
+        [200, 220, 0.8],
+        [300, 320, 0.6],
+    ], dtype=cp.float32)
+
+    result = _get_best_offsets_pair(offsets_by_windows, cfg)
+
+    _assert_cupy_row_equal(result, offsets_by_windows[2])
 
 
 def test_integration_returns_none_when_no_correlation() -> None:
