@@ -62,7 +62,7 @@ def _find_offsets_for_episode(idx1: int, audio1: np.ndarray[Any, np.dtype[np.flo
                               cfg: Config) -> tuple[Interval, Interval] | None:
     if audio1.shape[0] < cfg.min_segment_length_beats or audio2.shape[0] < cfg.min_segment_length_beats:
         logger.warning('One of the audios is shorter than %s secs: %s, %s. Skipping.',
-                       cfg.min_segment_length_sec, audio1.shape[0], audio2.shape[0])
+                       cfg.async_correlator_segment_secs, audio1.shape[0], audio2.shape[0])
         return None
 
     # Step 1: Adjust the audios and calculate the correlation
@@ -115,6 +115,13 @@ def _find_offsets_for_episodes(audios: Iterator[np.ndarray[Any, np.dtype[np.floa
 
         result = _find_offsets_for_episode(idx1, audio1, idx2, audio2, cfg)
         if result is None:
+            continue
+
+        a1_in_range = cfg.min_intro_length_secs <= result[0].end - result[0].start <= cfg.max_intro_length_secs
+        a2_in_range = cfg.min_intro_length_secs <= result[1].end - result[1].start <= cfg.max_intro_length_secs
+        if not a1_in_range or not a2_in_range:
+            logger.warning('Found offsets are too short or too long: %s, %s for %s and %s. Skipping.',
+                           result[0], result[1], idx1, idx2)
             continue
 
         results[idx1].append(result[0])
