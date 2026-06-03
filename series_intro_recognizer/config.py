@@ -33,10 +33,12 @@ class Config:
         max_intro_length_secs (float): Maximum valid intro duration (seconds).
         precision_secs (float): Precision of the correlation in seconds.
         series_window (int): Number of sequential audio samples to be matched.
-        offset_searcher_sequential_secs (int): Number of sequential 'non-intro'
-            seconds that signal the end of the intro.
+        offset_calculator_max_gap_secs (int): Maximum gap in seconds allowed
+            between above-threshold correlation values in a candidate sequence.
         offset_searcher_similarity_too_close_coeff (float): Coefficient for determining
             if correlations are too close and should be skipped.
+        offset_calculator_min_continuous_positive_secs (float): Minimum continuous
+            seconds in the found sequence that must remain above threshold.
         adjustment_threshold (bool): Whether to adjust the intro borders.
         adjustment_threshold_secs (float): Threshold for border adjustment.
         save_intermediate_results (bool): Whether to save correlation results.
@@ -45,8 +47,10 @@ class Config:
     Computed Properties:
         min_segment_length_beats (int): Fragment size for the async correlator in samples.
         precision_beats (int): Precision of the correlation in beats.
-        offset_searcher_sequential_intervals (int): Number of sequential
-            'non-intro' beats that signal the end of the intro.
+        offset_calculator_max_gap_intervals (int): Maximum number of correlation
+            intervals allowed between above-threshold values in a candidate sequence.
+        offset_calculator_min_continuous_positive_intervals (int): Number of sequential
+            above-threshold beats required inside the found sequence.
     """
 
     rate: int = 44100  # Audio sample rate
@@ -58,8 +62,9 @@ class Config:
 
     series_window: int = 5  # Number of sequential audio samples to be matched
 
-    offset_searcher_sequential_secs: int = 30  # 'Non-intro' seconds that signal the end of the intro
+    offset_calculator_max_gap_secs: int = 30  # Maximum gap between positive spikes in a candidate sequence
     offset_searcher_similarity_too_close_coeff: float = 1e-3  # Coefficient for determining if audios are the same
+    offset_calculator_min_continuous_positive_secs: float = 10  # Minimum continuous positive seconds in found sequence
 
     correlator_always_choose_best_score: bool = False  # Whether to always choose the best score instead of length clusters
 
@@ -86,9 +91,14 @@ class Config:
         return int(self.precision_secs * self.rate)
 
     @property
-    def offset_searcher_sequential_intervals(self) -> int:
-        """Returns the number of sequential 'non-intro' beats that signal the end of the intro."""
-        return int(self.offset_searcher_sequential_secs / self.precision_secs)
+    def offset_calculator_max_gap_intervals(self) -> int:
+        """Returns the maximum gap between above-threshold correlation intervals."""
+        return int(self.offset_calculator_max_gap_secs / self.precision_secs)
+
+    @property
+    def offset_calculator_min_continuous_positive_intervals(self) -> int:
+        """Returns the number of sequential above-threshold beats required inside the found sequence."""
+        return int(self.offset_calculator_min_continuous_positive_secs / self.precision_secs)
 
     @classmethod
     def preset_anime_opening(cls) -> "Config":
@@ -102,5 +112,4 @@ class Config:
         Often anime episodes ends with the sequence "real ending"-"some scene"-"publisher's ad".
         Shorter threshold allows to detect this "scene" part.
         """
-        return cls(offset_searcher_sequential_secs=5)
-
+        return cls(offset_calculator_max_gap_secs=5)
