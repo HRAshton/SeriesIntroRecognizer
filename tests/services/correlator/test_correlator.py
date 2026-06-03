@@ -12,8 +12,7 @@ def _assert_cupy_row_equal(actual: cp.ndarray, expected: cp.ndarray) -> None:
 
 
 def test_get_best_offsets_pair_always_choose_best_score() -> None:
-    cfg = Config()
-    cfg.correlator_always_choose_best_score = True
+    cfg = Config(correlator_always_choose_best_score=True)
     offsets_by_windows = cp.asarray([
         [0, 10, 0.8],
         [100, 110, 0.7],

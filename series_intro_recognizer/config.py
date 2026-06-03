@@ -12,17 +12,17 @@ Usage:
     config = Config()
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Config:
     """
     Configuration class for the series opening recognizer.
 
     This class stores various parameters used for audio processing, such as
     sample rate, segment lengths, precision, and threshold values. It also
-    computes dependent attributes like segment lengths in beats and
+    exposes computed properties like segment lengths in beats and
     offset intervals.
 
     Attributes:
@@ -66,37 +66,37 @@ class Config:
 
     save_intermediate_results: bool = False  # Save correlation results
 
-    # Computed attributes
-    _min_segment_length_beats: int = field(init=False)
-    _max_segment_length_beats: int = field(init=False)
-    _precision_beats: int = field(init=False)
-    _offset_searcher_sequential_intervals: int = field(init=False)
-
-    def __post_init__(self) -> None:
-        """
-        Compute dependent attributes after initialization.
-        """
-        self._min_segment_length_beats = int(self.min_segment_length_sec * self.rate)
-        self._max_segment_length_beats = int(self.max_segment_length_sec * self.rate)
-        self._precision_beats = int(self.precision_secs * self.rate)
-        self._offset_searcher_sequential_intervals = int(self.offset_searcher_sequential_secs / self.precision_secs)
-
     @property
     def min_segment_length_beats(self) -> int:
         """Returns the minimum length of the intro in beats."""
-        return self._min_segment_length_beats
+        return int(self.min_segment_length_sec * self.rate)
 
     @property
     def max_segment_length_beats(self) -> int:
         """Returns the maximum length of the intro in beats."""
-        return self._max_segment_length_beats
+        return int(self.max_segment_length_sec * self.rate)
 
     @property
     def precision_beats(self) -> int:
         """Returns the precision of the correlation in beats."""
-        return self._precision_beats
+        return int(self.precision_secs * self.rate)
 
     @property
     def offset_searcher_sequential_intervals(self) -> int:
         """Returns the number of sequential 'non-intro' beats that signal the end of the intro."""
-        return self._offset_searcher_sequential_intervals
+        return int(self.offset_searcher_sequential_secs / self.precision_secs)
+
+    @classmethod
+    def preset_anime_opening(cls) -> "Config":
+        """Preset for detecting anime openings (default values)."""
+        return cls()
+
+    @classmethod
+    def preset_anime_ending(cls) -> "Config":
+        """
+        Preset for detecting anime endings (shorter non-intro window).
+        Often anime episodes ends with the sequence "real ending"-"some scene"-"publisher's ad".
+        Shorter threshold allows to detect this "scene" part.
+        """
+        return cls(offset_searcher_sequential_secs=5)
+
