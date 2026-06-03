@@ -27,8 +27,10 @@ class Config:
 
     Attributes:
         rate (int): Audio sample rate (Hz).
-        min_segment_length_sec (int): Minimum length of the intro in seconds.
-        max_segment_length_sec (int): Maximum length of the intro in seconds.
+        async_correlator_segment_secs (float): Fragment size for the async correlator (seconds).
+            Also used as the minimum audio length required for processing.
+        min_intro_length_secs (float): Minimum valid intro duration (seconds).
+        max_intro_length_secs (float): Maximum valid intro duration (seconds).
         precision_secs (float): Precision of the correlation in seconds.
         series_window (int): Number of sequential audio samples to be matched.
         offset_searcher_sequential_secs (int): Number of sequential 'non-intro'
@@ -41,8 +43,7 @@ class Config:
         correlator_always_choose_best_score (bool): Whether to always choose the best score instead of length clusters.
 
     Computed Properties:
-        min_segment_length_beats (int): Minimum length of the intro in beats.
-        max_segment_length_beats (int): Maximum length of the intro in beats.
+        min_segment_length_beats (int): Fragment size for the async correlator in samples.
         precision_beats (int): Precision of the correlation in beats.
         offset_searcher_sequential_intervals (int): Number of sequential
             'non-intro' beats that signal the end of the intro.
@@ -50,8 +51,9 @@ class Config:
 
     rate: int = 44100  # Audio sample rate
 
-    min_segment_length_sec: int = 30  # Minimum length of the intro (seconds)
-    max_segment_length_sec: int = 150  # Maximum length of the intro (seconds)
+    async_correlator_segment_secs: float = 30  # Fragment size for the async correlator (seconds)
+    min_intro_length_secs: float = 30  # Minimum valid intro duration (seconds)
+    max_intro_length_secs: float = 150  # Maximum valid intro duration (seconds)
     precision_secs: float = 0.5  # Precision of the correlation (seconds)
 
     series_window: int = 5  # Number of sequential audio samples to be matched
@@ -66,15 +68,17 @@ class Config:
 
     save_intermediate_results: bool = False  # Save correlation results
 
-    @property
-    def min_segment_length_beats(self) -> int:
-        """Returns the minimum length of the intro in beats."""
-        return int(self.min_segment_length_sec * self.rate)
+    def __post_init__(self) -> None:
+        if self.async_correlator_segment_secs > self.min_intro_length_secs:
+            raise ValueError(
+                f'async_correlator_segment_secs ({self.async_correlator_segment_secs}) '
+                f'must be <= min_intro_length_secs ({self.min_intro_length_secs})'
+            )
 
     @property
-    def max_segment_length_beats(self) -> int:
-        """Returns the maximum length of the intro in beats."""
-        return int(self.max_segment_length_sec * self.rate)
+    def min_segment_length_beats(self) -> int:
+        """Returns the async correlator fragment size in samples."""
+        return int(self.async_correlator_segment_secs * self.rate)
 
     @property
     def precision_beats(self) -> int:
