@@ -11,13 +11,22 @@ logger = logging.getLogger(__name__)
 _LONGEST_SEQUENCE_WITH_GAPS_KERNEL = cp.RawKernel(
     code=r'''
     extern "C" __global__
-    void longest_sequence_with_gaps(const bool* arr, const int n, const int max_gap_length, int* out_start, int* out_end) {
+    void longest_sequence_with_gaps(
+        const bool* arr,
+        const int n,
+        const int max_gap_length,
+        const int min_continuous_length,
+        int* out_start,
+        int* out_end
+    ) {
         if (blockIdx.x != 0 || threadIdx.x != 0) {
             return;
         }
 
         int current_start = -1;
         int current_end = -1;
+        int current_positive_run = 0;
+        int current_max_positive_run = 0;
         int longest_start = -1;
         int longest_end = -1;
         int gap_length = 0;
@@ -28,22 +37,36 @@ _LONGEST_SEQUENCE_WITH_GAPS_KERNEL = cp.RawKernel(
                     current_start = i;
                 }
                 current_end = i;
+                current_positive_run++;
+                if (current_positive_run > current_max_positive_run) {
+                    current_max_positive_run = current_positive_run;
+                }
                 gap_length = 0;
             } else if (current_start != -1) {
+                current_positive_run = 0;
                 gap_length++;
                 if (gap_length > max_gap_length) {
-                    if ((longest_start == -1) || (current_end - current_start > longest_end - longest_start)) {
+                    if (
+                        current_max_positive_run >= min_continuous_length
+                        && ((longest_start == -1) || (current_end - current_start > longest_end - longest_start))
+                    ) {
                         longest_start = current_start;
                         longest_end = current_end;
                     }
                     current_start = -1;
                     current_end = -1;
+                    current_positive_run = 0;
+                    current_max_positive_run = 0;
                     gap_length = 0;
                 }
             }
         }
 
-        if ((current_start != -1) && (current_end - current_start > longest_end - longest_start)) {
+        if (
+            (current_start != -1)
+            && current_max_positive_run >= min_continuous_length
+            && (current_end - current_start > longest_end - longest_start)
+        ) {
             longest_start = current_start;
             longest_end = current_end;
         }
@@ -67,7 +90,7 @@ def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat | None:
     return cp.max(filtered) / 2
 
 
-def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> tuple[int, int]:
+def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int, min_continuous_length: int) -> tuple[int, int]:
     n = int(arr.size)
     if n == 0:
         return -1, -1
@@ -77,7 +100,7 @@ def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int) -> tupl
     _LONGEST_SEQUENCE_WITH_GAPS_KERNEL(
         (1,),
         (1,),
-        (arr, cp.int32(n), cp.int32(max_gap_length), out_start, out_end),
+        (arr, n, max_gap_length, min_continuous_length, out_start, out_end),
     )
 
     return int(out_start[0]), int(out_end[0])
@@ -99,7 +122,15 @@ def _find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | 
         return None
 
     bools = cp.asarray(corr_values > threshold)
-    start, end = _longest_sequence_with_gaps(bools, cfg.offset_searcher_sequential_intervals)
+    start, end = _longest_sequence_with_gaps(
+        bools,
+        cfg.offset_calculator_max_gap_intervals,
+        cfg.offset_calculator_min_continuous_positive_intervals,
+    )
+
+    if start < 0:
+        logger.warning('No correlation sequence contains enough continuous positive values. Skipping.')
+        return None
 
     # Try to include the next element, because the end is exclusive
     # However, it would be incorrect if the end is at the last element,
