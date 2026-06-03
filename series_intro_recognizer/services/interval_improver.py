@@ -4,12 +4,13 @@ from series_intro_recognizer.config import Config
 from series_intro_recognizer.tp.interval import Interval
 
 
-def _filter_too_long_intervals(interval: Interval, cfg: Config) -> Interval:
+def _filter_by_length(interval: Interval, cfg: Config) -> Interval:
     """
-    If the interval is too long, it is replaced with NaNs.
+    If the interval is too long or short, it is replaced with NaNs.
     """
+    length = interval.end - interval.start
     return (interval
-            if interval.end - interval.start <= cfg.max_segment_length_sec
+            if cfg.min_intro_length_secs <= length <= cfg.max_intro_length_secs
             else Interval(math.nan, math.nan))
 
 
@@ -37,6 +38,6 @@ def improve_interval(interval: Interval, audio_duration: float, cfg: Config) -> 
         return interval
 
     interval = _adjust_borders(interval, audio_duration, cfg)
-    interval = _filter_too_long_intervals(interval, cfg)
+    interval = _filter_by_length(interval, cfg)
 
     return interval
