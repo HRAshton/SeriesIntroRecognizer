@@ -41,13 +41,26 @@ def test_get_best_offsets_pair_falls_back_to_best_score_when_no_lag_cluster() ->
     cfg = Config()
     offsets_by_windows = cp.asarray([
         [0, 10, 0.5],
-        [100, 120, 0.7],
-        [200, 500, 0.9],
+        [100, 100_000, 0.7],
+        [200, 500_000, 0.9],
     ], dtype=cp.float32)
 
     result = _get_best_offsets_pair(offsets_by_windows, cfg)
 
     _assert_cupy_row_equal(result, offsets_by_windows[2])
+
+
+def test_get_best_offsets_pair_prefers_similar_lag_cluster_over_isolated_best_score() -> None:
+    cfg = Config(rate=10, correlator_lag_tolerance_secs=1)
+    offsets_by_windows = cp.asarray([
+        [0, 100, 0.5],
+        [100, 205, 0.7],
+        [200, 500, 0.9],
+    ], dtype=cp.float32)
+
+    result = _get_best_offsets_pair(offsets_by_windows, cfg)
+
+    _assert_cupy_row_equal(result, offsets_by_windows[1])
 
 
 def test_get_best_offsets_pair_uses_best_score_across_tied_lag_clusters() -> None:

@@ -45,6 +45,8 @@ class Config:
         adjustment_threshold_secs (float): Threshold for border adjustment.
         save_intermediate_results (bool): Whether to save correlation results.
         correlator_always_choose_best_score (bool): Whether to always choose the best score instead of length clusters.
+        correlator_lag_tolerance_secs (float): Maximum lag difference in seconds
+            for async correlator fragments to support the same candidate match.
 
     Computed Properties:
         min_segment_length_beats (int): Fragment size for the async correlator in samples.
@@ -55,6 +57,8 @@ class Config:
             above-threshold beats required inside the found sequence.
         offset_calculator_max_ignored_trailing_positive_intervals (int): Maximum trailing
             above-threshold intervals to trim from a candidate after an allowed gap.
+        correlator_lag_tolerance_beats (int): Maximum lag difference in samples
+            for async correlator fragments to support the same candidate match.
     """
 
     rate: int = 44100  # Audio sample rate
@@ -72,6 +76,7 @@ class Config:
     offset_calculator_max_ignored_trailing_positive_secs: float = 0  # Disabled unless a preset enables it
 
     correlator_always_choose_best_score: bool = False  # Whether to always choose the best score instead of length clusters
+    correlator_lag_tolerance_secs: float = 0.5  # Lag tolerance for async fragment match clustering
 
     adjustment_threshold: bool = True  # Whether to adjust intro borders
     adjustment_threshold_secs: float = 3.0  # Threshold for border adjustment
@@ -109,6 +114,11 @@ class Config:
     def offset_calculator_max_ignored_trailing_positive_intervals(self) -> int:
         """Returns the maximum trailing above-threshold intervals to trim after an allowed gap."""
         return int(self.offset_calculator_max_ignored_trailing_positive_secs / self.precision_secs)
+
+    @property
+    def correlator_lag_tolerance_beats(self) -> int:
+        """Returns the lag tolerance for async fragment match clustering in samples."""
+        return int(self.correlator_lag_tolerance_secs * self.rate)
 
     @classmethod
     def preset_anime_opening(cls) -> "Config":
