@@ -36,8 +36,27 @@ def _get_best_offsets_pair(
     lags = offsets_by_windows[:, 1] - offsets_by_windows[:, 0]
     scores = offsets_by_windows[:, 2]
 
+    exact_match = _get_best_offsets_pair_by_cluster(offsets_by_windows, lags, scores)
+    if exact_match is not None:
+        return exact_match
+
+    tolerance = cfg.correlator_lag_tolerance_beats
+    if tolerance > 0:
+        lag_buckets = cp.rint(lags / tolerance)
+        approximate_match = _get_best_offsets_pair_by_cluster(offsets_by_windows, lag_buckets, scores)
+        if approximate_match is not None:
+            return approximate_match
+
+    return offsets_by_windows[cp.argmax(scores)]
+
+
+def _get_best_offsets_pair_by_cluster(
+    offsets_by_windows: GpuStack[GpuFloat, GpuFloat, GpuFloat],
+    cluster_keys: GpuFloatArray,
+    scores: GpuFloatArray,
+) -> GpuFloatArray | None:
     unique_lags, inverse, counts = cp.unique(
-        lags,
+        cluster_keys,
         return_inverse=True,
         return_counts=True,
     )
@@ -45,7 +64,7 @@ def _get_best_offsets_pair(
     best_count = cp.max(counts)
 
     if int(best_count) <= 1:
-        return offsets_by_windows[cp.argmax(scores)]
+        return None
 
     # lag values belonging to the largest cluster
     best_lag_ids = cp.where(counts == best_count)[0]
