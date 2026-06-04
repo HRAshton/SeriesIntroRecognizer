@@ -39,6 +39,8 @@ class Config:
             if correlations are too close and should be skipped.
         offset_calculator_min_continuous_positive_secs (float): Minimum continuous
             seconds in the found sequence that must remain above threshold.
+        offset_calculator_max_ignored_trailing_positive_secs (float): Maximum trailing
+            above-threshold seconds to trim from a candidate after an allowed gap.
         adjustment_threshold (bool): Whether to adjust the intro borders.
         adjustment_threshold_secs (float): Threshold for border adjustment.
         save_intermediate_results (bool): Whether to save correlation results.
@@ -51,6 +53,8 @@ class Config:
             intervals allowed between above-threshold values in a candidate sequence.
         offset_calculator_min_continuous_positive_intervals (int): Number of sequential
             above-threshold beats required inside the found sequence.
+        offset_calculator_max_ignored_trailing_positive_intervals (int): Maximum trailing
+            above-threshold intervals to trim from a candidate after an allowed gap.
     """
 
     rate: int = 44100  # Audio sample rate
@@ -65,6 +69,7 @@ class Config:
     offset_calculator_max_gap_secs: int = 30  # Maximum gap between positive spikes in a candidate sequence
     offset_searcher_similarity_too_close_coeff: float = 1e-3  # Coefficient for determining if audios are the same
     offset_calculator_min_continuous_positive_secs: float = 10  # Minimum continuous positive seconds in found sequence
+    offset_calculator_max_ignored_trailing_positive_secs: float = 0  # Disabled unless a preset enables it
 
     correlator_always_choose_best_score: bool = False  # Whether to always choose the best score instead of length clusters
 
@@ -100,6 +105,11 @@ class Config:
         """Returns the number of sequential above-threshold beats required inside the found sequence."""
         return int(self.offset_calculator_min_continuous_positive_secs / self.precision_secs)
 
+    @property
+    def offset_calculator_max_ignored_trailing_positive_intervals(self) -> int:
+        """Returns the maximum trailing above-threshold intervals to trim after an allowed gap."""
+        return int(self.offset_calculator_max_ignored_trailing_positive_secs / self.precision_secs)
+
     @classmethod
     def preset_anime_opening(cls) -> "Config":
         """Preset for detecting anime openings (default values)."""
@@ -109,7 +119,8 @@ class Config:
     def preset_anime_ending(cls) -> "Config":
         """
         Preset for detecting anime endings (shorter non-intro window).
-        Often anime episodes ends with the sequence "real ending"-"some scene"-"publisher's ad".
-        Shorter threshold allows to detect this "scene" part.
+        Often anime episodes ends with the sequence "real ending"-"some scene"-"endcard".
         """
-        return cls(offset_calculator_max_gap_secs=5)
+        return cls(
+            offset_calculator_max_ignored_trailing_positive_secs=15,
+        )

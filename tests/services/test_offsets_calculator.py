@@ -101,6 +101,59 @@ def test__longest_sequence_skips_candidate_without_min_continuous_positive_secs(
     assert find_offsets_result == (start, start + valid_short_candidate.size)
 
 
+def test__trailing_short_positive_run_after_gap_can_be_ignored() -> None:
+    cfg = Config(
+        offset_calculator_max_gap_secs=5,
+        precision_secs=1,
+        offset_calculator_min_continuous_positive_secs=2,
+        offset_calculator_max_ignored_trailing_positive_secs=3,
+    )
+    ending = cp.ones(30, dtype=cp.float32) * 12
+    scene_after_ending = cp.zeros(3, dtype=cp.float32)
+    endcard = cp.ones(2, dtype=cp.float32) * 12
+    low = cp.zeros(cfg.offset_calculator_max_gap_intervals + 1, dtype=cp.float32)
+    corr_values = cp.concatenate([ending, scene_after_ending, endcard, low], dtype=cp.float32)
+
+    find_offsets_result = find_offsets(corr_values, cfg)
+
+    assert find_offsets_result == (0, ending.size)
+
+
+def test__trailing_short_positive_run_is_kept_when_ignoring_is_disabled() -> None:
+    cfg = Config(
+        offset_calculator_max_gap_secs=5,
+        precision_secs=1,
+        offset_calculator_min_continuous_positive_secs=2,
+    )
+    ending = cp.ones(30, dtype=cp.float32) * 12
+    scene_after_ending = cp.zeros(3, dtype=cp.float32)
+    endcard = cp.ones(2, dtype=cp.float32) * 12
+    low = cp.zeros(cfg.offset_calculator_max_gap_intervals + 1, dtype=cp.float32)
+    corr_values = cp.concatenate([ending, scene_after_ending, endcard, low], dtype=cp.float32)
+
+    find_offsets_result = find_offsets(corr_values, cfg)
+
+    assert find_offsets_result == (0, ending.size + scene_after_ending.size + endcard.size)
+
+
+def test__trailing_positive_run_longer_than_endcard_limit_is_kept() -> None:
+    cfg = Config(
+        offset_calculator_max_gap_secs=5,
+        precision_secs=1,
+        offset_calculator_min_continuous_positive_secs=2,
+        offset_calculator_max_ignored_trailing_positive_secs=3,
+    )
+    ending = cp.ones(30, dtype=cp.float32) * 12
+    scene_after_ending = cp.zeros(3, dtype=cp.float32)
+    repeated_scene = cp.ones(4, dtype=cp.float32) * 12
+    low = cp.zeros(cfg.offset_calculator_max_gap_intervals + 1, dtype=cp.float32)
+    corr_values = cp.concatenate([ending, scene_after_ending, repeated_scene, low], dtype=cp.float32)
+
+    find_offsets_result = find_offsets(corr_values, cfg)
+
+    assert find_offsets_result == (0, ending.size + scene_after_ending.size + repeated_scene.size)
+
+
 def test__plateau_with_extreme_high_peaks__correct_offsets() -> None:
     cfg = Config()
     low1 = cp.zeros(cfg.offset_calculator_max_gap_intervals * 3)
