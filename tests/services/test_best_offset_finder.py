@@ -72,3 +72,26 @@ def test_too_few_clusters() -> None:
     result = find_best_offset([Interval(value, value) for value in values], cfg)
 
     assert result == Interval(1.0 + 1/2 * 1e-6, 1.0 + 1/2 * 1e-6)
+
+
+def test_keeps_start_and_end_from_same_interval_cluster() -> None:
+    cfg = Config()
+    intervals = [
+        Interval(0, 0),
+        Interval(0, 10),
+        Interval(0, 20),
+        Interval(0, 30),
+        Interval(0, 40),
+        Interval(0, 50),
+        Interval(0, 60),
+        Interval(100, 200),
+        Interval(110, 200),
+        Interval(120, 200),
+        Interval(130, 200),
+        Interval(140, 200),
+        Interval(150, 200),
+    ]
+
+    result = find_best_offset(intervals, cfg)
+
+    assert result == Interval(0, 15)
