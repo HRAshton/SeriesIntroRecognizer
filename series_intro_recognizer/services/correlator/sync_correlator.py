@@ -19,7 +19,10 @@ def _create_fragments(audio: GpuFloatArray, num_frames: GpuInt, cfg: Config) -> 
 def _normalize_fragments(fragments: GpuFloatArray) -> GpuFloatArray:
     mean = cp.mean(fragments, axis=1, keepdims=True)
     std = cp.std(fragments, axis=1, keepdims=True)
-    return (fragments - mean) / std
+    centered = fragments - mean
+    mask = std > 1e-8
+    zero = cp.asarray(0, dtype=fragments.dtype)
+    return cp.where(mask, centered / std, zero)
 
 
 def _correlation_with_sync_moving_window(audio1: GpuFloatArray, audio2: GpuFloatArray, cfg: Config) \
