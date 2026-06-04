@@ -16,6 +16,7 @@ _LONGEST_SEQUENCE_WITH_GAPS_KERNEL = cp.RawKernel(
         const int n,
         const int max_gap_length,
         const int min_continuous_length,
+        const int max_ignored_trailing_length,
         int* out_start,
         int* out_end
     ) {
@@ -27,6 +28,9 @@ _LONGEST_SEQUENCE_WITH_GAPS_KERNEL = cp.RawKernel(
         int current_end = -1;
         int current_positive_run = 0;
         int current_max_positive_run = 0;
+        int current_max_positive_run_before_last_run = 0;
+        int current_end_before_last_run = -1;
+        int last_positive_run_length = 0;
         int longest_start = -1;
         int longest_end = -1;
         int gap_length = 0;
@@ -36,8 +40,14 @@ _LONGEST_SEQUENCE_WITH_GAPS_KERNEL = cp.RawKernel(
                 if (current_start == -1) {
                     current_start = i;
                 }
+                if (gap_length > 0) {
+                    current_end_before_last_run = current_end;
+                    current_max_positive_run_before_last_run = current_max_positive_run;
+                    current_positive_run = 0;
+                }
                 current_end = i;
                 current_positive_run++;
+                last_positive_run_length = current_positive_run;
                 if (current_positive_run > current_max_positive_run) {
                     current_max_positive_run = current_positive_run;
                 }
@@ -46,29 +56,52 @@ _LONGEST_SEQUENCE_WITH_GAPS_KERNEL = cp.RawKernel(
                 current_positive_run = 0;
                 gap_length++;
                 if (gap_length > max_gap_length) {
+                    int candidate_end = current_end;
+                    int candidate_max_positive_run = current_max_positive_run;
                     if (
-                        current_max_positive_run >= min_continuous_length
-                        && ((longest_start == -1) || (current_end - current_start > longest_end - longest_start))
+                        max_ignored_trailing_length > 0
+                        && current_end_before_last_run >= current_start
+                        && last_positive_run_length <= max_ignored_trailing_length
+                    ) {
+                        candidate_end = current_end_before_last_run;
+                        candidate_max_positive_run = current_max_positive_run_before_last_run;
+                    }
+                    if (
+                        candidate_max_positive_run >= min_continuous_length
+                        && ((longest_start == -1) || (candidate_end - current_start > longest_end - longest_start))
                     ) {
                         longest_start = current_start;
-                        longest_end = current_end;
+                        longest_end = candidate_end;
                     }
                     current_start = -1;
                     current_end = -1;
                     current_positive_run = 0;
                     current_max_positive_run = 0;
+                    current_max_positive_run_before_last_run = 0;
+                    current_end_before_last_run = -1;
+                    last_positive_run_length = 0;
                     gap_length = 0;
                 }
             }
         }
 
+        int candidate_end = current_end;
+        int candidate_max_positive_run = current_max_positive_run;
+        if (
+            max_ignored_trailing_length > 0
+            && current_end_before_last_run >= current_start
+            && last_positive_run_length <= max_ignored_trailing_length
+        ) {
+            candidate_end = current_end_before_last_run;
+            candidate_max_positive_run = current_max_positive_run_before_last_run;
+        }
         if (
             (current_start != -1)
-            && current_max_positive_run >= min_continuous_length
-            && (current_end - current_start > longest_end - longest_start)
+            && candidate_max_positive_run >= min_continuous_length
+            && (candidate_end - current_start > longest_end - longest_start)
         ) {
             longest_start = current_start;
-            longest_end = current_end;
+            longest_end = candidate_end;
         }
 
         out_start[0] = longest_start;
@@ -90,7 +123,11 @@ def _get_threshold(corr_values: GpuFloatArray) -> GpuFloat | None:
     return cp.max(filtered) / 2
 
 
-def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int, min_continuous_length: int) -> tuple[int, int]:
+def _longest_sequence_with_gaps(
+        arr: GpuFloatArray,
+        max_gap_length: int,
+        min_continuous_length: int,
+        max_ignored_trailing_length: int) -> tuple[int, int]:
     n = int(arr.size)
     if n == 0:
         return -1, -1
@@ -100,7 +137,7 @@ def _longest_sequence_with_gaps(arr: GpuFloatArray, max_gap_length: int, min_con
     _LONGEST_SEQUENCE_WITH_GAPS_KERNEL(
         (1,),
         (1,),
-        (arr, n, max_gap_length, min_continuous_length, out_start, out_end),
+        (arr, n, max_gap_length, min_continuous_length, max_ignored_trailing_length, out_start, out_end),
     )
 
     return int(out_start[0]), int(out_end[0])
@@ -126,6 +163,7 @@ def _find_offsets(corr_values: GpuFloatArray, cfg: Config) -> tuple[int, int] | 
         bools,
         cfg.offset_calculator_max_gap_intervals,
         cfg.offset_calculator_min_continuous_positive_intervals,
+        cfg.offset_calculator_max_ignored_trailing_positive_intervals,
     )
 
     if start < 0:
