@@ -66,12 +66,12 @@ def test_calculates_correct(offsets: list[tuple[float, float]], expected: tuple[
 
 
 def test_too_few_clusters() -> None:
-    cfg = Config(precision_secs = 1e-15)
+    cfg = Config(precision_secs=1e-15)
     values = [1.0, 1.0 - 1e-6, 1.0 + 1e-6]
 
     result = find_best_offset([Interval(value, value) for value in values], cfg)
 
-    assert result == Interval(1.0 + 1/2 * 1e-6, 1.0 + 1/2 * 1e-6)
+    assert result == Interval(1.0 + 1 / 2 * 1e-6, 1.0 + 1 / 2 * 1e-6)
 
 
 def test_keeps_start_and_end_from_same_interval_cluster() -> None:
