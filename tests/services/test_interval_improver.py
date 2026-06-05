@@ -48,7 +48,7 @@ def test__interval_close_to_start_but_disabled__no_adjustment() -> None:
 
 
 def test__interval_close_to_start__adjusted_to_start() -> None:
-    cfg = Config(adjustment_threshold_secs = 10)
+    cfg = Config(adjustment_threshold_secs=10)
     interval = Interval(10, 50)
     audio_duration = 100
 
@@ -58,7 +58,7 @@ def test__interval_close_to_start__adjusted_to_start() -> None:
 
 
 def test__interval_close_to_end__adjusted_to_end() -> None:
-    cfg = Config(adjustment_threshold_secs = 10)
+    cfg = Config(adjustment_threshold_secs=10)
     interval = Interval(30, 90)
     audio_duration = 100
 
@@ -68,7 +68,7 @@ def test__interval_close_to_end__adjusted_to_end() -> None:
 
 
 def test__interval_close_to_start_and_end__adjusted_to_start_and_end() -> None:
-    cfg = Config(adjustment_threshold_secs = 10)
+    cfg = Config(adjustment_threshold_secs=10)
     interval = Interval(10, 90)
     audio_duration = 100
 
