@@ -17,7 +17,7 @@ def _fit_k(data: np.ndarray[Any, np.dtype[np.float64]]) -> int:
     best_k = 2
     best_silhouette_score = -1
     max_clusters = min(unique_points - 1, data.shape[0] - 1, 10)
-    for k in range(2, max_clusters):
+    for k in range(2, max_clusters + 1):
         kmeans = KMeans(n_clusters=k, random_state=0).fit(data)
         labels = kmeans.labels_
         if len(set(labels)) == 1:
