@@ -1,8 +1,11 @@
 import math
+from typing import Any
 
+import numpy as np
 import pytest
 
 from series_intro_recognizer.config import Config
+from series_intro_recognizer.services import best_offset_finder
 from series_intro_recognizer.services.best_offset_finder import find_best_offset
 from series_intro_recognizer.tp.interval import Interval
 
@@ -72,6 +75,34 @@ def test_too_few_clusters() -> None:
     result = find_best_offset([Interval(value, value) for value in values], cfg)
 
     assert result == Interval(1.0 + 1 / 2 * 1e-6, 1.0 + 1 / 2 * 1e-6)
+
+
+def test_fit_k_checks_max_cluster_count(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeKMeans:
+        labels_: list[int]
+
+        def __init__(self, n_clusters: int, random_state: int) -> None:
+            self.n_clusters = n_clusters
+
+        def fit(self, data: np.ndarray[Any, np.dtype[np.float64]]) -> "FakeKMeans":
+            self.labels_ = [index % self.n_clusters for index in range(data.shape[0])]
+            return self
+
+    def fake_silhouette_score(
+        data: np.ndarray[Any, np.dtype[np.float64]],
+        labels: list[int],
+        random_state: int,
+    ) -> float:
+        return float(len(set(labels)))
+
+    monkeypatch.setattr(best_offset_finder, "KMeans", FakeKMeans)
+    monkeypatch.setattr(best_offset_finder, "silhouette_score", fake_silhouette_score)
+
+    data = np.array([0.0, 10.0, 20.0, 30.0]).reshape(-1, 1)
+
+    result = best_offset_finder._fit_k(data)
+
+    assert result == 3
 
 
 def test_keeps_start_and_end_from_same_interval_cluster() -> None:
